@@ -50,42 +50,42 @@ function setupTableEventListeners() {
     // Apply checkbox
     document.querySelectorAll('.apply-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const index = parseInt(this.dataset.jobIndex);
-            const internship = filteredInternships[index];
+            const jobId = this.dataset.jobId;
+            const internship = allInternships.find(i => i.job_id === jobId);
             if (!internship || !internship.job_id) {
-                console.error('Invalid internship data:', {index, internship});
+                console.error('Invalid internship data:', {jobId, internship});
                 showToast('Error: Invalid job data', 'error');
                 return;
             }
-            toggleApplied(internship.job_id, this.checked);
+            toggleApplied(jobId, this.checked);
         });
     });
 
     // Resume select
     document.querySelectorAll('.resume-select').forEach(select => {
         select.addEventListener('change', function() {
-            const index = parseInt(this.dataset.jobIndex);
-            const internship = filteredInternships[index];
+            const jobId = this.dataset.jobId;
+            const internship = allInternships.find(i => i.job_id === jobId);
             if (!internship || !internship.job_id) {
-                console.error('Invalid internship data:', {index, internship});
+                console.error('Invalid internship data:', {jobId, internship});
                 showToast('Error: Invalid job data', 'error');
                 return;
             }
-            selectResume(internship.job_id, this.value);
+            selectResume(jobId, this.value);
         });
     });
 
     // Notes button
     document.querySelectorAll('.notes-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const index = parseInt(this.dataset.jobIndex);
-            const internship = filteredInternships[index];
+            const jobId = this.dataset.jobId;
+            const internship = allInternships.find(i => i.job_id === jobId);
             if (!internship || !internship.job_id) {
-                console.error('Invalid internship data:', {index, internship});
+                console.error('Invalid internship data:', {jobId, internship});
                 showToast('Error: Invalid job data', 'error');
                 return;
             }
-            openNotes(internship.job_id);
+            openNotes(jobId);
         });
     });
 }
@@ -134,7 +134,7 @@ function applyFilters() {
         if (company && !internship.company.toLowerCase().includes(company)) return false;
         if (dateFrom && internship.date_posted < dateFrom) return false;
         if (dateTo && internship.date_posted > dateTo) return false;
-        if (faangOnly && internship.is_faang_plus !== 'True') return false;
+        if (faangOnly && internship.is_faang_plus !== true && internship.is_faang_plus !== 'True') return false;
         if (appliedOnly && !internship.applied) return false;
         return true;
     });
@@ -164,12 +164,14 @@ function renderInternships() {
         return;
     }
 
-    tbody.innerHTML = filteredInternships.map((internship, index) => `
-        <tr class="${internship.applied ? 'applied' : ''}" data-job-index="${index}">
+    console.log('Rendering internships. Total filtered:', filteredInternships.length);
+    tbody.innerHTML = filteredInternships.map((internship, index) => {
+        return `
+<tr class="${internship.applied ? 'applied' : ''}" data-job-id="${internship.job_id}">
             <td>
                 <input type="checkbox"
                        class="apply-checkbox"
-                       data-job-index="${index}"
+                       data-job-id="${internship.job_id}"
                        ${internship.applied ? 'checked' : ''}>
             </td>
             <td>
@@ -182,27 +184,24 @@ function renderInternships() {
             <td>${formatDate(internship.date_posted)}</td>
             <td>
                 <div class="link-group">
-                    ${internship.base_url ? `<a href="${escapeHtml(internship.base_url)}" target="_blank">🔗 Direct Link</a>` : ''}
-                    ${internship.application_url ? `<a href="${escapeHtml(internship.application_url)}" target="_blank">📝 Apply (Simplify)</a>` : ''}
+                    ${internship.base_url ? '<a href="' + escapeHtml(internship.base_url) + '" target="_blank">🔗 Direct Link</a>' : ''}
+                    ${internship.application_url ? '<a href="' + escapeHtml(internship.application_url) + '" target="_blank">📝 Apply (Simplify)</a>' : ''}
                 </div>
             </td>
             <td>
-                <select class="resume-select" data-job-index="${index}">
+                <select class="resume-select" data-job-id="${internship.job_id}">
                     <option value="">No resume</option>
-                    ${allResumes.map(resume => `
-                        <option value="${resume.hash}" ${internship.resume_hash === resume.hash ? 'selected' : ''}>
-                            ${escapeHtml(resume.original_filename)}
-                        </option>
-                    `).join('')}
+                    ${allResumes.map(resume => '<option value="' + resume.hash + '" ' + (internship.resume_hash === resume.hash ? 'selected' : '') + '>' + escapeHtml(resume.original_filename) + '</option>').join('')}
                 </select>
             </td>
             <td>
-                <button class="btn btn-secondary btn-sm notes-btn" data-job-index="${index}">
+                <button class="btn btn-secondary btn-sm notes-btn" data-job-id="${internship.job_id}">
                     📝 Notes
                 </button>
             </td>
         </tr>
-    `).join('');
+`
+}).join('')
 
     // Add event listeners using event delegation
     setupTableEventListeners();

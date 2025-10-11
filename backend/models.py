@@ -8,6 +8,7 @@ from datetime import datetime
 
 class Internship(BaseModel):
     """Internship data model"""
+    job_id: str
     source_file: str
     company: str
     role: str
