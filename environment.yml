@@ -1,0 +1,13 @@
+name: internship-tracker
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - fastapi==0.115.0
+    - uvicorn[standard]==0.31.0
+    - python-multipart==0.0.12
+    - pydantic==2.9.2
+    - aiosqlite==0.20.0

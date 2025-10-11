@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internship Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Summer 2026 Internship Tracker</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-primary">🔄 Refresh Data</button>
+                <div class="upload-section">
+                    <label for="resumeUpload" class="btn btn-secondary">📄 Upload Resume</label>
+                    <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx" style="display: none;">
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-label">Total:</span>
+                <span id="totalCount" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Applied:</span>
+                <span id="appliedCount" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">FAANG+:</span>
+                <span id="faangCount" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="categoryFilter">Category:</label>
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="software_engineering">Software Engineering</option>
+                    <option value="data_science">Data Science & ML</option>
+                    <option value="quant_finance">Quantitative Finance</option>
+                    <option value="product_management">Product Management</option>
+                    <option value="hardware_engineering">Hardware Engineering</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="locationFilter">Location:</label>
+                <input type="text" id="locationFilter" placeholder="e.g., NYC, Remote">
+            </div>
+
+            <div class="filter-group">
+                <label for="companyFilter">Company:</label>
+                <input type="text" id="companyFilter" placeholder="e.g., Google">
+            </div>
+
+            <div class="filter-group">
+                <label for="dateFromFilter">Date From:</label>
+                <input type="date" id="dateFromFilter">
+            </div>
+
+            <div class="filter-group">
+                <label for="dateToFilter">Date To:</label>
+                <input type="date" id="dateToFilter">
+            </div>
+
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="faangFilter">
+                    FAANG+ Only
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="showAppliedFilter">
+                    Show Applied Only
+                </label>
+            </div>
+
+            <button id="resetFilters" class="btn btn-secondary">Reset Filters</button>
+        </div>
+
+        <div class="table-container">
+            <table id="internshipsTable">
+                <thead>
+                    <tr>
+                        <th>Applied</th>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Location</th>
+                        <th>Category</th>
+                        <th>Date Posted</th>
+                        <th>Links</th>
+                        <th>Resume</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="internshipsBody">
+                    <tr>
+                        <td colspan="9" class="loading">Loading internships...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="resumeModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Select Resume</h2>
+                <div id="resumeList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
