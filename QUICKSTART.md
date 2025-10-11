@@ -48,7 +48,7 @@ Then visit `http://localhost:8080`
 
 ### 🔄 Refresh Data
 - Click "Refresh Data" button
-- Automatically runs `git pull` in Summer2026-Internships
+- Automatically runs `git pull` in data/internships submodule
 - Re-parses all CSV files
 
 ### 📝 Add Notes
@@ -81,8 +81,8 @@ Then visit `http://localhost:8080`
 - Check browser console (F12) for errors
 
 **Refresh button doesn't work?**
-- Make sure Summer2026-Internships is a git repository
-- Try manual refresh: `cd Summer2026-Internships && git pull && python parse_internships.py`
+- Make sure data/internships submodule is initialized
+- Try manual refresh: `cd data/internships && git pull && python parse_internships.py`
 
 ---
 
@@ -110,7 +110,7 @@ uvicorn.run(app, host="0.0.0.0", port=8000)  # Change 8000 to your port
 ```
 
 ### Change Date Filter
-Edit `Summer2026-Internships/parse_internships.py`, line ~250:
+Edit `data/internships/parse_internships.py`, line ~250:
 ```python
 seven_days_ago = datetime.now() - timedelta(days=7)  # Change 7 to your preference
 ```

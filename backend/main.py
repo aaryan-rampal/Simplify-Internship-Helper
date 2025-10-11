@@ -29,7 +29,7 @@ app.add_middleware(
 
 # Paths
 BASE_DIR = Path(__file__).parent.parent
-INTERNSHIPS_DIR = BASE_DIR / "Summer2026-Internships"
+INTERNSHIPS_DIR = BASE_DIR / "data" / "internships"
 RESUMES_DIR = BASE_DIR / "resumes"
 RESUMES_DIR.mkdir(exist_ok=True)
 
