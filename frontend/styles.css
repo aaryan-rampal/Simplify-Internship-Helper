@@ -143,14 +143,14 @@ h1 {
 .table-container {
     background: white;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto;
+    table-layout: fixed;
 }
 
 thead {
@@ -184,12 +184,24 @@ td {
     padding: 12px 15px;
     font-size: 14px;
     vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 td:first-child {
     width: 60px;
     text-align: center;
 }
+
+th:nth-child(1), td:nth-child(1) { width: 60px; }
+th:nth-child(2), td:nth-child(2) { width: 180px; }
+th:nth-child(3), td:nth-child(3) { width: 200px; }
+th:nth-child(4), td:nth-child(4) { width: 150px; }
+th:nth-child(5), td:nth-child(5) { width: 100px; }
+th:nth-child(6), td:nth-child(6) { width: 120px; }
+th:nth-child(7), td:nth-child(7) { width: 150px; }
+th:nth-child(8), td:nth-child(8) { width: 180px; }
+th:nth-child(9), td:nth-child(9) { width: 100px; }
 
 .loading {
     text-align: center;
