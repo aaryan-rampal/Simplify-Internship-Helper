@@ -52,6 +52,11 @@ function setupTableEventListeners() {
         checkbox.addEventListener('change', function() {
             const index = parseInt(this.dataset.jobIndex);
             const internship = filteredInternships[index];
+            if (!internship || !internship.job_id) {
+                console.error('Invalid internship data:', {index, internship});
+                showToast('Error: Invalid job data', 'error');
+                return;
+            }
             toggleApplied(internship.job_id, this.checked);
         });
     });
@@ -61,6 +66,11 @@ function setupTableEventListeners() {
         select.addEventListener('change', function() {
             const index = parseInt(this.dataset.jobIndex);
             const internship = filteredInternships[index];
+            if (!internship || !internship.job_id) {
+                console.error('Invalid internship data:', {index, internship});
+                showToast('Error: Invalid job data', 'error');
+                return;
+            }
             selectResume(internship.job_id, this.value);
         });
     });
@@ -70,6 +80,11 @@ function setupTableEventListeners() {
         button.addEventListener('click', function() {
             const index = parseInt(this.dataset.jobIndex);
             const internship = filteredInternships[index];
+            if (!internship || !internship.job_id) {
+                console.error('Invalid internship data:', {index, internship});
+                showToast('Error: Invalid job data', 'error');
+                return;
+            }
             openNotes(internship.job_id);
         });
     });
