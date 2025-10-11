@@ -198,10 +198,11 @@ th:nth-child(2), td:nth-child(2) { width: 180px; }
 th:nth-child(3), td:nth-child(3) { width: 200px; }
 th:nth-child(4), td:nth-child(4) { width: 150px; }
 th:nth-child(5), td:nth-child(5) { width: 100px; }
-th:nth-child(6), td:nth-child(6) { width: 120px; }
-th:nth-child(7), td:nth-child(7) { width: 150px; }
-th:nth-child(8), td:nth-child(8) { width: 180px; }
-th:nth-child(9), td:nth-child(9) { width: 100px; }
+th:nth-child(6), td:nth-child(6) { width: 80px; text-align: center; }
+th:nth-child(7), td:nth-child(7) { width: 120px; }
+th:nth-child(8), td:nth-child(8) { width: 150px; }
+th:nth-child(9), td:nth-child(9) { width: 180px; }
+th:nth-child(10), td:nth-child(10) { width: 100px; }
 
 .loading {
     text-align: center;
@@ -341,4 +342,96 @@ input[type="checkbox"] {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+.multi-select-container {
+    position: relative;
+    min-width: 200px;
+}
+
+.multi-select-header {
+    padding: 8px 12px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.multi-select-header:hover {
+    border-color: #007aff;
+}
+
+.multi-select-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.multi-select-arrow {
+    margin-left: 8px;
+    transition: transform 0.2s;
+}
+
+.multi-select-container.open .multi-select-arrow {
+    transform: rotate(180deg);
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    margin-top: 4px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.multi-select-container.open .multi-select-dropdown {
+    display: block;
+}
+
+.multi-select-dropdown label {
+    display: block;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    font-weight: normal;
+    color: #1d1d1f;
+}
+
+.multi-select-dropdown label:hover {
+    background-color: #f5f5f7;
+}
+
+.multi-select-dropdown input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.dropdown-search {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 1px solid #d2d2d7;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.dropdown-search:focus {
+    border-bottom-color: #007aff;
+}
+
+.dropdown-options {
+    max-height: 250px;
+    overflow-y: auto;
 }

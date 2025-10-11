@@ -20,6 +20,9 @@ class Internship(BaseModel):
     age_raw: str
     date_posted: str
     category: str  # Added to identify which CSV it came from
+    emojis: str = ""
+    has_phd_emoji: bool = False
+    has_clearance_emoji: bool = False
 
 
 class InternshipWithStatus(Internship):

@@ -6,6 +6,9 @@ let allInternships = [];
 let filteredInternships = [];
 let allResumes = [];
 let currentJobIdForResume = null;
+let selectedCategories = new Set();
+let selectedLocations = new Set();
+let selectedCompanies = new Set();
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
@@ -17,13 +20,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Filters
-    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
-    document.getElementById('locationFilter').addEventListener('input', debounce(applyFilters, 300));
-    document.getElementById('companyFilter').addEventListener('input', debounce(applyFilters, 300));
+    // Multi-select dropdown toggles
+    document.getElementById('categoryFilterHeader').addEventListener('click', () => toggleDropdown('category'));
+    document.getElementById('locationFilterHeader').addEventListener('click', () => toggleDropdown('location'));
+    document.getElementById('companyFilterHeader').addEventListener('click', () => toggleDropdown('company'));
+    
+    // Initialize category checkboxes
+    document.querySelectorAll('#categoryFilterDropdown input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', handleCategoryChange);
+    });
+
+    // Date filters
     document.getElementById('dateFromFilter').addEventListener('change', applyFilters);
     document.getElementById('dateToFilter').addEventListener('change', applyFilters);
     document.getElementById('faangFilter').addEventListener('change', applyFilters);
+    document.getElementById('phdFilter').addEventListener('change', applyFilters);
+    document.getElementById('clearanceFilter').addEventListener('change', applyFilters);
     document.getElementById('showAppliedFilter').addEventListener('change', applyFilters);
 
     // Reset filters
@@ -41,6 +53,22 @@ function setupEventListeners() {
         const modal = document.getElementById('resumeModal');
         if (e.target === modal) {
             closeModal();
+        }
+    });
+    
+    // Close dropdowns when clicking outside (but not when clicking inside dropdown)
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.multi-select-container')) {
+            document.querySelectorAll('.multi-select-container').forEach(container => {
+                container.classList.remove('open');
+            });
+        }
+    });
+    
+    // Prevent dropdown from closing when clicking inside
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.multi-select-dropdown')) {
+            e.stopPropagation();
         }
     });
 }
@@ -98,6 +126,7 @@ async function loadInternships() {
 
         allInternships = await response.json();
         filteredInternships = [...allInternships];
+        populateFilterDropdowns();
         renderInternships();
         updateStats();
     } catch (error) {
@@ -120,39 +149,199 @@ async function loadResumes() {
 
 // Apply filters
 function applyFilters() {
-    const category = document.getElementById('categoryFilter').value;
-    const location = document.getElementById('locationFilter').value.toLowerCase();
-    const company = document.getElementById('companyFilter').value.toLowerCase();
     const dateFrom = document.getElementById('dateFromFilter').value;
     const dateTo = document.getElementById('dateToFilter').value;
     const faangOnly = document.getElementById('faangFilter').checked;
+    const phdOnly = document.getElementById('phdFilter').checked;
+    const clearanceOnly = document.getElementById('clearanceFilter').checked;
     const appliedOnly = document.getElementById('showAppliedFilter').checked;
 
     filteredInternships = allInternships.filter(internship => {
-        if (category && internship.category !== category) return false;
-        if (location && !internship.location.toLowerCase().includes(location)) return false;
-        if (company && !internship.company.toLowerCase().includes(company)) return false;
+        if (selectedCategories.size > 0 && !selectedCategories.has(internship.category)) return false;
+        if (selectedLocations.size > 0 && !selectedLocations.has(internship.location)) return false;
+        if (selectedCompanies.size > 0 && !selectedCompanies.has(internship.company)) return false;
         if (dateFrom && internship.date_posted < dateFrom) return false;
         if (dateTo && internship.date_posted > dateTo) return false;
         if (faangOnly && internship.is_faang_plus !== true && internship.is_faang_plus !== 'True') return false;
+        if (phdOnly && !internship.has_phd_emoji) return false;
+        if (clearanceOnly && !internship.has_clearance_emoji) return false;
         if (appliedOnly && !internship.applied) return false;
         return true;
     });
 
+    populateFilterDropdowns();
     renderInternships();
     updateStats();
 }
 
 // Reset filters
 function resetFilters() {
-    document.getElementById('categoryFilter').value = '';
-    document.getElementById('locationFilter').value = '';
-    document.getElementById('companyFilter').value = '';
+    selectedCategories.clear();
+    selectedLocations.clear();
+    selectedCompanies.clear();
+    
+    document.querySelectorAll('#categoryFilterDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+    
+    updateHeaderText('category');
+    updateHeaderText('location');
+    updateHeaderText('company');
+    
     document.getElementById('dateFromFilter').value = '';
     document.getElementById('dateToFilter').value = '';
     document.getElementById('faangFilter').checked = false;
+    document.getElementById('phdFilter').checked = false;
+    document.getElementById('clearanceFilter').checked = false;
     document.getElementById('showAppliedFilter').checked = false;
+    
     applyFilters();
+}
+
+// Populate location and company dropdowns dynamically
+function populateFilterDropdowns() {
+    const locations = new Set();
+    const companies = new Set();
+    
+    filteredInternships.forEach(internship => {
+        locations.add(internship.location);
+        companies.add(internship.company);
+    });
+    
+    const locationOptions = document.querySelector('#locationFilterDropdown .dropdown-options');
+    locationOptions.innerHTML = Array.from(locations).sort().map(location => 
+        `<label><input type="checkbox" value="${escapeHtml(location)}" ${selectedLocations.has(location) ? 'checked' : ''}> ${escapeHtml(location)}</label>`
+    ).join('');
+    
+    const companyOptions = document.querySelector('#companyFilterDropdown .dropdown-options');
+    companyOptions.innerHTML = Array.from(companies).sort().map(company => 
+        `<label><input type="checkbox" value="${escapeHtml(company)}" ${selectedCompanies.has(company) ? 'checked' : ''}> ${escapeHtml(company)}</label>`
+    ).join('');
+    
+    attachDropdownListeners();
+}
+
+// Attach event listeners to dropdown checkboxes
+function attachDropdownListeners() {
+    document.querySelectorAll('#locationFilterDropdown .dropdown-options input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', handleLocationChange);
+    });
+    
+    document.querySelectorAll('#companyFilterDropdown .dropdown-options input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', handleCompanyChange);
+    });
+    
+    const locationSearch = document.getElementById('locationSearch');
+    const companySearch = document.getElementById('companySearch');
+    
+    if (locationSearch) {
+        locationSearch.addEventListener('input', (e) => filterDropdownOptions('location', e.target.value));
+    }
+    
+    if (companySearch) {
+        companySearch.addEventListener('input', (e) => filterDropdownOptions('company', e.target.value));
+    }
+}
+
+// Filter dropdown options based on search
+function filterDropdownOptions(type, searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const selector = type === 'location' ? '#locationFilterDropdown .dropdown-options label' : '#companyFilterDropdown .dropdown-options label';
+    
+    document.querySelectorAll(selector).forEach(label => {
+        const text = label.textContent.toLowerCase();
+        if (text.includes(searchLower)) {
+            label.style.display = 'block';
+        } else {
+            label.style.display = 'none';
+        }
+    });
+}
+
+// Handle category selection
+function handleCategoryChange(e) {
+    if (e.target.checked) {
+        selectedCategories.add(e.target.value);
+    } else {
+        selectedCategories.delete(e.target.value);
+    }
+    updateHeaderText('category');
+    applyFilters();
+}
+
+// Handle location selection
+function handleLocationChange(e) {
+    if (e.target.checked) {
+        selectedLocations.add(e.target.value);
+    } else {
+        selectedLocations.delete(e.target.value);
+    }
+    updateHeaderText('location');
+    applyFilters();
+}
+
+// Handle company selection
+function handleCompanyChange(e) {
+    if (e.target.checked) {
+        selectedCompanies.add(e.target.value);
+    } else {
+        selectedCompanies.delete(e.target.value);
+    }
+    updateHeaderText('company');
+    applyFilters();
+}
+
+// Update header text to show selected count
+function updateHeaderText(type) {
+    let header, selectedSet, defaultText;
+    
+    if (type === 'category') {
+        header = document.querySelector('#categoryFilterHeader .multi-select-text');
+        selectedSet = selectedCategories;
+        defaultText = 'All Categories';
+    } else if (type === 'location') {
+        header = document.querySelector('#locationFilterHeader .multi-select-text');
+        selectedSet = selectedLocations;
+        defaultText = 'All Locations';
+    } else if (type === 'company') {
+        header = document.querySelector('#companyFilterHeader .multi-select-text');
+        selectedSet = selectedCompanies;
+        defaultText = 'All Companies';
+    }
+    
+    if (selectedSet.size === 0) {
+        header.textContent = defaultText;
+    } else if (selectedSet.size === 1) {
+        header.textContent = Array.from(selectedSet)[0];
+    } else {
+        header.textContent = `${selectedSet.size} selected`;
+    }
+}
+
+// Toggle dropdown open/close
+function toggleDropdown(type) {
+    const container = document.getElementById(`${type}FilterHeader`).parentElement;
+    const isOpen = container.classList.contains('open');
+    
+    document.querySelectorAll('.multi-select-container').forEach(c => c.classList.remove('open'));
+    
+    if (!isOpen) {
+        container.classList.add('open');
+        
+        if (type === 'location') {
+            const searchInput = document.getElementById('locationSearch');
+            if (searchInput) {
+                searchInput.value = '';
+                filterDropdownOptions('location', '');
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        } else if (type === 'company') {
+            const searchInput = document.getElementById('companySearch');
+            if (searchInput) {
+                searchInput.value = '';
+                filterDropdownOptions('company', '');
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        }
+    }
 }
 
 // Render internships table
@@ -160,7 +349,7 @@ function renderInternships() {
     const tbody = document.getElementById('internshipsBody');
 
     if (filteredInternships.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="no-results">No internships found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="no-results">No internships found</td></tr>';
         return;
     }
 
@@ -181,6 +370,7 @@ function renderInternships() {
             <td>${escapeHtml(internship.role)}</td>
             <td>${escapeHtml(internship.location)}</td>
             <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
+            <td style="font-size: 18px; text-align: center;">${internship.emojis || ''}</td>
             <td>${formatDate(internship.date_posted)}</td>
             <td>
                 <div class="link-group">

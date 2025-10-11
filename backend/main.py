@@ -9,6 +9,7 @@ import csv
 import hashlib
 import shutil
 import subprocess
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -42,6 +43,20 @@ def compute_file_hash(file_path: Path) -> str:
     return sha256_hash.hexdigest()
 
 
+def extract_emojis(text: str) -> List[str]:
+    """Extract emojis from text"""
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F300-\U0001F9FF"
+        "\U0001F600-\U0001F64F"
+        "\U0001F680-\U0001F6FF"
+        "\U00002600-\U000027BF"
+        "]+", 
+        flags=re.UNICODE
+    )
+    return emoji_pattern.findall(text)
+
+
 def load_internships_from_csv(csv_path: Path, category: str) -> List[dict]:
     """Load internships from a CSV file"""
     internships = []
@@ -53,6 +68,15 @@ def load_internships_from_csv(csv_path: Path, category: str) -> List[dict]:
         for row in reader:
             internship = dict(row)
             internship['category'] = category
+            
+            # Extract emojis from role
+            emojis = extract_emojis(internship.get('role', ''))
+            internship['emojis'] = ','.join(emojis) if emojis else ''
+            
+            # Add individual emoji flags
+            internship['has_phd_emoji'] = '🎓' in emojis
+            internship['has_clearance_emoji'] = '🛂' in emojis
+            
             # Create unique job_id based on company, role, and location
             job_id = f"{internship['company']}|{internship['role']}|{internship['location']}|{internship['date_posted']}"
             internship['job_id'] = job_id

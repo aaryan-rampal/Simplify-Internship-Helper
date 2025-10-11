@@ -36,25 +36,50 @@
 
         <div class="filters">
             <div class="filter-group">
-                <label for="categoryFilter">Category:</label>
-                <select id="categoryFilter">
-                    <option value="">All Categories</option>
-                    <option value="software_engineering">Software Engineering</option>
-                    <option value="data_science">Data Science & ML</option>
-                    <option value="quant_finance">Quantitative Finance</option>
-                    <option value="product_management">Product Management</option>
-                    <option value="hardware_engineering">Hardware Engineering</option>
-                </select>
+                <label for="categoryFilter">Categories:</label>
+                <div class="multi-select-container">
+                    <div class="multi-select-header" id="categoryFilterHeader">
+                        <span class="multi-select-text">All Categories</span>
+                        <span class="multi-select-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-dropdown" id="categoryFilterDropdown">
+                        <label><input type="checkbox" value="software_engineering"> Software Engineering</label>
+                        <label><input type="checkbox" value="data_science"> Data Science & ML</label>
+                        <label><input type="checkbox" value="quant_finance"> Quantitative Finance</label>
+                        <label><input type="checkbox" value="product_management"> Product Management</label>
+                        <label><input type="checkbox" value="hardware_engineering"> Hardware Engineering</label>
+                    </div>
+                </div>
             </div>
 
             <div class="filter-group">
-                <label for="locationFilter">Location:</label>
-                <input type="text" id="locationFilter" placeholder="e.g., NYC, Remote">
+                <label for="locationFilter">Locations:</label>
+                <div class="multi-select-container">
+                    <div class="multi-select-header" id="locationFilterHeader">
+                        <span class="multi-select-text">All Locations</span>
+                        <span class="multi-select-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-dropdown" id="locationFilterDropdown">
+                        <input type="text" class="dropdown-search" id="locationSearch" placeholder="Search locations..." />
+                        <div class="dropdown-options" style="max-height: 250px; overflow-y: auto;">
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="filter-group">
-                <label for="companyFilter">Company:</label>
-                <input type="text" id="companyFilter" placeholder="e.g., Google">
+                <label for="companyFilter">Companies:</label>
+                <div class="multi-select-container">
+                    <div class="multi-select-header" id="companyFilterHeader">
+                        <span class="multi-select-text">All Companies</span>
+                        <span class="multi-select-arrow">▼</span>
+                    </div>
+                    <div class="multi-select-dropdown" id="companyFilterDropdown">
+                        <input type="text" class="dropdown-search" id="companySearch" placeholder="Search companies..." />
+                        <div class="dropdown-options" style="max-height: 250px; overflow-y: auto;">
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="filter-group">
@@ -71,6 +96,20 @@
                 <label>
                     <input type="checkbox" id="faangFilter">
                     FAANG+ Only
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="phdFilter">
+                    🎓 PhD/Graduate Only
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="clearanceFilter">
+                    🛂 Clearance Required Only
                 </label>
             </div>
 
@@ -93,6 +132,7 @@
                         <th>Role</th>
                         <th>Location</th>
                         <th>Category</th>
+                        <th>Emojis</th>
                         <th>Date Posted</th>
                         <th>Links</th>
                         <th>Resume</th>
@@ -101,7 +141,7 @@
                 </thead>
                 <tbody id="internshipsBody">
                     <tr>
-                        <td colspan="9" class="loading">Loading internships...</td>
+                        <td colspan="10" class="loading">Loading internships...</td>
                     </tr>
                 </tbody>
             </table>
