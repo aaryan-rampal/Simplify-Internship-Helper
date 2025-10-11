@@ -45,6 +45,36 @@ function setupEventListeners() {
     });
 }
 
+// Setup table event listeners (called after rendering)
+function setupTableEventListeners() {
+    // Apply checkbox
+    document.querySelectorAll('.apply-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const index = parseInt(this.dataset.jobIndex);
+            const internship = filteredInternships[index];
+            toggleApplied(internship.job_id, this.checked);
+        });
+    });
+
+    // Resume select
+    document.querySelectorAll('.resume-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const index = parseInt(this.dataset.jobIndex);
+            const internship = filteredInternships[index];
+            selectResume(internship.job_id, this.value);
+        });
+    });
+
+    // Notes button
+    document.querySelectorAll('.notes-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = parseInt(this.dataset.jobIndex);
+            const internship = filteredInternships[index];
+            openNotes(internship.job_id);
+        });
+    });
+}
+
 // Load internships from API
 async function loadInternships() {
     try {
@@ -119,44 +149,48 @@ function renderInternships() {
         return;
     }
 
-    tbody.innerHTML = filteredInternships.map(internship => `
-        <tr class="${internship.applied ? 'applied' : ''}">
+    tbody.innerHTML = filteredInternships.map((internship, index) => `
+        <tr class="${internship.applied ? 'applied' : ''}" data-job-index="${index}">
             <td>
                 <input type="checkbox"
-                       ${internship.applied ? 'checked' : ''}
-                       onchange="toggleApplied('${escapeHtml(internship.job_id)}', this.checked)">
+                       class="apply-checkbox"
+                       data-job-index="${index}"
+                       ${internship.applied ? 'checked' : ''}>
             </td>
             <td>
-                ${internship.company}
+                ${escapeHtml(internship.company)}
                 ${internship.is_faang_plus === 'True' ? '<span class="badge badge-faang">🔥 FAANG+</span>' : ''}
             </td>
-            <td>${internship.role}</td>
-            <td>${internship.location}</td>
+            <td>${escapeHtml(internship.role)}</td>
+            <td>${escapeHtml(internship.location)}</td>
             <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
             <td>${formatDate(internship.date_posted)}</td>
             <td>
                 <div class="link-group">
-                    ${internship.base_url ? `<a href="${internship.base_url}" target="_blank">🔗 Direct Link</a>` : ''}
-                    ${internship.application_url ? `<a href="${internship.application_url}" target="_blank">📝 Apply (Simplify)</a>` : ''}
+                    ${internship.base_url ? `<a href="${escapeHtml(internship.base_url)}" target="_blank">🔗 Direct Link</a>` : ''}
+                    ${internship.application_url ? `<a href="${escapeHtml(internship.application_url)}" target="_blank">📝 Apply (Simplify)</a>` : ''}
                 </div>
             </td>
             <td>
-                <select class="resume-select" onchange="selectResume('${escapeHtml(internship.job_id)}', this.value)">
+                <select class="resume-select" data-job-index="${index}">
                     <option value="">No resume</option>
                     ${allResumes.map(resume => `
                         <option value="${resume.hash}" ${internship.resume_hash === resume.hash ? 'selected' : ''}>
-                            ${resume.original_filename}
+                            ${escapeHtml(resume.original_filename)}
                         </option>
                     `).join('')}
                 </select>
             </td>
             <td>
-                <button class="btn btn-secondary btn-sm" onclick="openNotes('${escapeHtml(internship.job_id)}')">
+                <button class="btn btn-secondary btn-sm notes-btn" data-job-index="${index}">
                     📝 Notes
                 </button>
             </td>
         </tr>
     `).join('');
+
+    // Add event listeners using event delegation
+    setupTableEventListeners();
 }
 
 // Update stats
