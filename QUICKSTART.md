@@ -34,8 +34,9 @@ Then visit `http://localhost:8080`
 
 ### ✅ Track Applications
 - Check the box next to jobs you've applied to
-- Filter by category, location, company, date
+- Filter by category, location, company, date, FAANG+, PhD/Graduate, Clearance
 - See FAANG+ companies marked with 🔥
+- View emoji indicators for special role requirements (🎓 PhD, 🛂 Clearance)
 
 ### 📄 Manage Resumes
 - Upload resumes (automatically detects duplicates)
@@ -62,10 +63,11 @@ Then visit `http://localhost:8080`
 | Feature | Description |
 |---------|-------------|
 | **5 Categories** | Software Engineering, Data Science/ML, Quantitative Finance, Product Management, Hardware Engineering |
-| **Smart Filtering** | By category, location, company, date range, FAANG+ status |
+| **Advanced Filtering** | Multi-select category, dynamic location/company with search, date range, FAANG+, PhD/Graduate, Clearance |
+| **Emoji Indicators** | Visual role characteristics (🎓 PhD required, 🛂 Security clearance needed) |
 | **Resume Management** | Upload once, use everywhere with automatic deduplication |
 | **URL Cleaning** | Separate Simplify tracking URLs from direct application links |
-| **Git Integration** | One-click data refresh via git pull |
+| **Git Submodules** | Clean data source management with reproducible builds |
 | **Persistent Storage** | SQLite database tracks all your applications |
 
 ---

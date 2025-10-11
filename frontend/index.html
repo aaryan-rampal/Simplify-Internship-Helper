@@ -87,31 +87,66 @@
                 <input type="date" id="dateFromFilter">
             </div>
 
-            <div class="filter-group">
-                <label for="dateToFilter">Date To:</label>
-                <input type="date" id="dateToFilter">
-            </div>
+             <div class="filter-group">
+                 <label for="dateToFilter">Date To:</label>
+                 <input type="date" id="dateToFilter">
+             </div>
 
-            <div class="filter-group">
-                <label>
-                    <input type="checkbox" id="faangFilter">
-                    FAANG+ Only
-                </label>
-            </div>
+             <div style="flex-basis: 100%;"></div>
 
-            <div class="filter-group">
-                <label>
-                    <input type="checkbox" id="phdFilter">
-                    🎓 PhD/Graduate Only
-                </label>
-            </div>
+             <div class="filter-group">
+                 <label>FAANG+ Filter:</label>
+                 <div class="radio-group">
+                     <label class="radio-btn">
+                         <input type="radio" name="faangFilter" value="all" checked>
+                         <span>All</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="faangFilter" value="only">
+                         <span>Only FAANG+</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="faangFilter" value="exclude">
+                         <span>Exclude FAANG+</span>
+                     </label>
+                 </div>
+             </div>
 
-            <div class="filter-group">
-                <label>
-                    <input type="checkbox" id="clearanceFilter">
-                    🛂 Clearance Required Only
-                </label>
-            </div>
+             <div class="filter-group">
+                 <label>PhD/Graduates Filter:</label>
+                 <div class="radio-group">
+                     <label class="radio-btn">
+                         <input type="radio" name="phdFilter" value="all" checked>
+                         <span>All</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="phdFilter" value="only">
+                         <span>Only PhD/Grad</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="phdFilter" value="exclude">
+                         <span>Exclude PhD/Grad</span>
+                     </label>
+                 </div>
+             </div>
+
+             <div class="filter-group">
+                 <label>Clearance Filter:</label>
+                 <div class="radio-group">
+                     <label class="radio-btn">
+                         <input type="radio" name="clearanceFilter" value="all" checked>
+                         <span>All</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="clearanceFilter" value="only">
+                         <span>Only Clearance</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="clearanceFilter" value="exclude">
+                         <span>Exclude Clearance</span>
+                     </label>
+                 </div>
+             </div>
 
             <div class="filter-group">
                 <label>

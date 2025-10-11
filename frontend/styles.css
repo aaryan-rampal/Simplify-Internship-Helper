@@ -41,6 +41,7 @@ h1 {
 .header-actions {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .btn {
@@ -434,4 +435,48 @@ input[type="checkbox"] {
 .dropdown-options {
     max-height: 250px;
     overflow-y: auto;
+}
+
+.radio-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.radio-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.radio-btn:hover {
+    border-color: #007aff;
+    background-color: #f0f8ff;
+}
+
+.radio-btn input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.radio-btn input[type="radio"]:checked + span {
+    color: white;
+    background-color: #007aff;
+    border-color: #007aff;
+}
+
+.radio-btn span {
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }

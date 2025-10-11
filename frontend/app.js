@@ -33,9 +33,9 @@ function setupEventListeners() {
     // Date filters
     document.getElementById('dateFromFilter').addEventListener('change', applyFilters);
     document.getElementById('dateToFilter').addEventListener('change', applyFilters);
-    document.getElementById('faangFilter').addEventListener('change', applyFilters);
-    document.getElementById('phdFilter').addEventListener('change', applyFilters);
-    document.getElementById('clearanceFilter').addEventListener('change', applyFilters);
+    document.querySelectorAll('input[name="faangFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
+    document.querySelectorAll('input[name="phdFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
+    document.querySelectorAll('input[name="clearanceFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
     document.getElementById('showAppliedFilter').addEventListener('change', applyFilters);
 
     // Reset filters
@@ -151,9 +151,9 @@ async function loadResumes() {
 function applyFilters() {
     const dateFrom = document.getElementById('dateFromFilter').value;
     const dateTo = document.getElementById('dateToFilter').value;
-    const faangOnly = document.getElementById('faangFilter').checked;
-    const phdOnly = document.getElementById('phdFilter').checked;
-    const clearanceOnly = document.getElementById('clearanceFilter').checked;
+    const faangFilter = document.querySelector('input[name="faangFilter"]:checked').value;
+    const phdFilter = document.querySelector('input[name="phdFilter"]:checked').value;
+    const clearanceFilter = document.querySelector('input[name="clearanceFilter"]:checked').value;
     const appliedOnly = document.getElementById('showAppliedFilter').checked;
 
     filteredInternships = allInternships.filter(internship => {
@@ -162,9 +162,12 @@ function applyFilters() {
         if (selectedCompanies.size > 0 && !selectedCompanies.has(internship.company)) return false;
         if (dateFrom && internship.date_posted < dateFrom) return false;
         if (dateTo && internship.date_posted > dateTo) return false;
-        if (faangOnly && internship.is_faang_plus !== true && internship.is_faang_plus !== 'True') return false;
-        if (phdOnly && !internship.has_phd_emoji) return false;
-        if (clearanceOnly && !internship.has_clearance_emoji) return false;
+        if (faangFilter === 'only' && !(internship.is_faang_plus === true || internship.is_faang_plus === 'True')) return false;
+        if (faangFilter === 'exclude' && (internship.is_faang_plus === true || internship.is_faang_plus === 'True')) return false;
+        if (phdFilter === 'only' && !internship.has_phd_emoji) return false;
+        if (phdFilter === 'exclude' && internship.has_phd_emoji) return false;
+        if (clearanceFilter === 'only' && !internship.has_clearance_emoji) return false;
+        if (clearanceFilter === 'exclude' && internship.has_clearance_emoji) return false;
         if (appliedOnly && !internship.applied) return false;
         return true;
     });
@@ -179,20 +182,20 @@ function resetFilters() {
     selectedCategories.clear();
     selectedLocations.clear();
     selectedCompanies.clear();
-    
+
     document.querySelectorAll('#categoryFilterDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
-    
+
     updateHeaderText('category');
     updateHeaderText('location');
     updateHeaderText('company');
-    
+
     document.getElementById('dateFromFilter').value = '';
     document.getElementById('dateToFilter').value = '';
-    document.getElementById('faangFilter').checked = false;
-    document.getElementById('phdFilter').checked = false;
-    document.getElementById('clearanceFilter').checked = false;
+    document.querySelector('input[name="faangFilter"][value="all"]').checked = true;
+    document.querySelector('input[name="phdFilter"][value="all"]').checked = true;
+    document.querySelector('input[name="clearanceFilter"][value="all"]').checked = true;
     document.getElementById('showAppliedFilter').checked = false;
-    
+
     applyFilters();
 }
 
@@ -363,11 +366,11 @@ function renderInternships() {
                        data-job-id="${internship.job_id}"
                        ${internship.applied ? 'checked' : ''}>
             </td>
-            <td>
-                ${escapeHtml(internship.company)}
-                ${internship.is_faang_plus === 'True' ? '<span class="badge badge-faang">🔥 FAANG+</span>' : ''}
-            </td>
-            <td>${escapeHtml(internship.role)}</td>
+             <td>
+                 ${escapeHtml(internship.company)}
+                 ${internship.is_faang_plus === 'True' ? '<span class="badge badge-faang">🔥 FAANG+</span>' : ''}
+             </td>
+             <td>${escapeHtml(stripEmojis(internship.role))}</td>
             <td>${escapeHtml(internship.location)}</td>
             <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
             <td style="font-size: 18px; text-align: center;">${internship.emojis || ''}</td>
@@ -554,6 +557,11 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function stripEmojis(str) {
+    // Remove common emoji ranges (can be expanded if needed)
+    return str.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
 }
 
 function debounce(func, wait) {
