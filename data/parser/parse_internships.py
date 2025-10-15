@@ -112,13 +112,25 @@ def parse_section(readme_path, section_marker, category):
         cells = row.find_all('td')
         if len(cells) < 5:
             continue
-        
+
         company_html = str(cells[0])
         role = cells[1].get_text(strip=True)
         location = cells[2].get_text(strip=True)
-        application_html = str(cells[3])
-        age = cells[4].get_text(strip=True)
-        
+
+        # Handle both 5-column and 6-column table structures
+        # README.md: Company | Role | Location | Application | Age (5 columns)
+        # README-Off-Season.md: Company | Role | Location | Terms | Application | Age (6 columns)
+        terms = ''
+        if len(cells) >= 6:
+            # Off-Season table with Terms column
+            terms = cells[3].get_text(strip=True)
+            application_html = str(cells[4])
+            age = cells[5].get_text(strip=True)
+        else:
+            # Regular table without Terms column
+            application_html = str(cells[3])
+            age = cells[4].get_text(strip=True)
+
         if '↳' in company_html:
             company = last_company
             is_faang = last_is_faang
@@ -126,17 +138,11 @@ def parse_section(readme_path, section_marker, category):
             company, is_faang = extract_company(company_html)
             last_company = company
             last_is_faang = is_faang
-        
+
         if not company or not role:
             continue
-        
+
         base_url, app_url = extract_urls(application_html)
-        
-        terms = ''
-        if 'Off-Season' in readme_path.name:
-            terms_match = re.search(r'(Winter|Spring|Fall)\s+\d{4}', readme_path.name)
-            if terms_match:
-                terms = terms_match.group(0)
         
         internships.append({
             'source_file': readme_path.name,
