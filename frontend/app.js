@@ -352,7 +352,7 @@ function renderInternships() {
     const tbody = document.getElementById('internshipsBody');
 
     if (filteredInternships.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="no-results">No internships found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="no-results">No internships found</td></tr>';
         return;
     }
 
@@ -372,9 +372,10 @@ function renderInternships() {
              </td>
              <td>${escapeHtml(stripEmojis(internship.role))}</td>
             <td>${escapeHtml(internship.location)}</td>
-            <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
-            <td style="font-size: 18px; text-align: center;">${internship.emojis || ''}</td>
-            <td>${formatDate(internship.date_posted)}</td>
+             <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
+             <td style="font-size: 18px; text-align: center;">${internship.emojis || ''}</td>
+             <td>${formatDate(internship.date_posted)}</td>
+             <td><span class="badge">${getSeasonLabel(internship.source_file)}</span></td>
             <td>
                 <div class="link-group">
                     ${internship.base_url ? '<a href="' + escapeHtml(internship.base_url) + '" target="_blank">🔗 Direct Link</a>' : ''}
@@ -538,6 +539,10 @@ function getCategoryName(category) {
         'hardware_engineering': 'HW'
     };
     return names[category] || category;
+}
+
+function getSeasonLabel(sourceFile) {
+    return sourceFile === 'README.md' ? 'S26' : 'W26';
 }
 
 function formatDate(dateString) {

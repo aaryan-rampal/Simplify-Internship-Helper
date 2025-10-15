@@ -29,7 +29,9 @@ app.add_middleware(
 
 # Paths
 BASE_DIR = Path(__file__).parent.parent
-INTERNSHIPS_DIR = BASE_DIR / "data" / "internships"
+INTERNSHIPS_SUBMODULE = BASE_DIR / "data" / "internships"  # Git submodule (read-only)
+PARSED_DATA_DIR = BASE_DIR / "data" / "parsed"  # Generated CSV files
+PARSER_DIR = BASE_DIR / "data" / "parser"  # Parser script location
 RESUMES_DIR = BASE_DIR / "resumes"
 RESUMES_DIR.mkdir(exist_ok=True)
 
@@ -97,9 +99,12 @@ async def load_all_internships() -> List[dict]:
 
     all_internships = []
     for category, filename in categories.items():
-        csv_path = INTERNSHIPS_DIR / filename
+        csv_path = PARSED_DATA_DIR / filename
         internships = load_internships_from_csv(csv_path, category)
         all_internships.extend(internships)
+
+    # Sort by date posted (newest first)
+    all_internships.sort(key=lambda x: x['date_posted'], reverse=True)
 
     return all_internships
 
@@ -250,12 +255,12 @@ async def get_resumes():
 
 @app.post("/api/refresh", response_model=RefreshResponse)
 async def refresh_data():
-    """Refresh internship data by pulling from git and re-parsing"""
+    """Refresh internship data by pulling from git submodule and re-parsing"""
     try:
-        # Git pull in the Summer2026-Internships directory
+        # Git pull in the internships submodule (pristine upstream data)
         result = subprocess.run(
             ["git", "pull"],
-            cwd=INTERNSHIPS_DIR,
+            cwd=INTERNSHIPS_SUBMODULE,
             capture_output=True,
             text=True
         )
@@ -263,11 +268,13 @@ async def refresh_data():
         if result.returncode != 0:
             raise Exception(f"Git pull failed: {result.stderr}")
 
-        # Re-run the parser
-        parser_script = INTERNSHIPS_DIR / "parse_internships.py"
+        # Re-run the parser (reads from submodule, writes to parsed/)
+        parser_script = PARSER_DIR / "parse_internships.py"
+        if not parser_script.exists():
+            raise Exception(f"Parser script not found at {parser_script}")
+
         result = subprocess.run(
             ["python3", str(parser_script)],
-            cwd=INTERNSHIPS_DIR,
             capture_output=True,
             text=True
         )

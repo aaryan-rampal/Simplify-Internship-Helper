@@ -1,3 +1,12 @@
 data.db
 **__pycache__**
 resumes/
+
+# Generated CSV files (output from parser)
+data/parsed/*.csv
+
+# macOS files
+.DS_Store
+
+# AI agent files
+.ai-agents/

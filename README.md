@@ -27,8 +27,15 @@ job-helper/
 │   ├── styles.css           # Styling
 │   └── app.js               # JavaScript logic
 ├── data/
-│   └── internships/         # Git submodule (SimplifyJobs/Summer2026-Internships)
-│       └── parse_internships.py
+│   ├── internships/         # Git submodule (SimplifyJobs/Summer2026-Internships) - pristine
+│   ├── parser/              # Our custom parser script
+│   │   └── parse_internships.py
+│   └── parsed/              # Generated CSV files (git-ignored)
+│       ├── software_engineering_internships.csv
+│       ├── data_science_ml_internships.csv
+│       ├── quantitative_finance_internships.csv
+│       ├── product_management_internships.csv
+│       └── hardware_engineering_internships.csv
 ├── resumes/                 # Resume storage (auto-created)
 └── data.db                  # SQLite database (auto-created)
 ```
@@ -116,9 +123,10 @@ Then visit `http://localhost:8080`
 ### Refreshing Data
 
 - Click "Refresh Data" button to:
-  1. Pull latest changes from the internships data submodule
-  2. Re-run the parser to update CSV files
-  3. Reload internships in the UI
+  1. Pull latest changes from the internships data submodule (data/internships/)
+  2. Re-run the parser script (data/parser/parse_internships.py)
+  3. Regenerate CSV files in data/parsed/
+  4. Reload internships in the UI
 
 ## API Endpoints
 
@@ -146,32 +154,55 @@ Then visit `http://localhost:8080`
 - `file_path` - Path to stored file
 - `upload_date` - Upload timestamp
 
-## Parser Updates
+## Data Pipeline
 
-The `parse_internships.py` script has been updated to:
-- Extract all 5 categories (SW, DS/ML, Quant, PM, HW)
-- Clean URLs to remove Simplify tracking parameters
-- Generate separate CSV files for each category
-- Filter to last 7 days only
+The application uses a clean separation between upstream data and our processing:
+
+1. **data/internships/** - Git submodule containing pristine SimplifyJobs data (never modified)
+2. **data/parser/parse_internships.py** - Our parser script that:
+   - Reads from the internships submodule (README.md and README-Off-Season.md)
+   - Extracts all 5 categories (SW, DS/ML, Quant, PM, HW)
+   - Cleans URLs to remove Simplify tracking parameters
+   - Generates CSV files in data/parsed/
+3. **data/parsed/** - Generated CSV files (git-ignored, regenerated on demand)
+
+### Running the Parser Manually
+
+```bash
+python3 data/parser/parse_internships.py
+```
+
+This will read from `data/internships/` and write CSVs to `data/parsed/`.
 
 ## Working with Submodules
 
 This project uses git submodules to manage the internships data:
 
 ### Updating Internships Data
+
+**Via UI (Recommended):**
+- Click the "Refresh Data" button in the web interface
+
+**Manually:**
 ```bash
-# Update the submodule to latest
+# Pull latest from submodule
 cd data/internships
-git pull origin dev  # or main, depending on branch
+git pull origin dev
 cd ../..
+
+# Re-run parser to regenerate CSVs
+python3 data/parser/parse_internships.py
+
+# Optionally commit submodule pointer update
 git add data/internships
 git commit -m "chore: Update internships data submodule"
 ```
 
-### Notes
+### Important Notes
+- **Submodule is pristine**: Never add custom files to `data/internships/`
+- **Parser lives outside**: Custom scripts are in `data/parser/`
+- **CSVs are generated**: Files in `data/parsed/` are git-ignored and auto-generated
 - The internships data is sourced from: https://github.com/SimplifyJobs/Summer2026-Internships
-- The submodule tracks a specific commit, not a branch
-- Use the "Refresh Data" button in the UI to update from upstream
 
 ## Technologies Used
 

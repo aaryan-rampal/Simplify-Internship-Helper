@@ -1,5 +1,46 @@
 # Changelog
 
+## [2.2.0] - 2025-10-14
+
+### 🏗️ Architecture Refactoring
+- **Pristine Submodule**: Moved all custom files out of git submodule to keep it clean
+  - Created `data/parser/` directory for parse_internships.py script
+  - Created `data/parsed/` directory for generated CSV files
+  - Git submodule now contains only pristine SimplifyJobs data
+  - Clear separation between upstream data and our processing
+
+### ✨ New Features
+- **Season Column**: Added "Season" column to distinguish between Summer 2026 (S26) and Winter 2026 (W26) internships
+  - Frontend displays season badges in table
+  - Backend sorts internships by date (newest first)
+  - Helps differentiate between README.md and README-Off-Season.md sources
+
+### 🔧 Technical Improvements
+- **Updated Data Pipeline**:
+  - Parser reads from `data/internships/` (submodule)
+  - Parser writes to `data/parsed/` (git-ignored)
+  - Backend loads CSVs from `data/parsed/`
+  - Refresh endpoint improved with better path handling
+- **Path Refactoring**:
+  - `INTERNSHIPS_SUBMODULE` - Submodule location (read-only)
+  - `PARSED_DATA_DIR` - Generated CSV files
+  - `PARSER_DIR` - Parser script location
+- **Git Configuration**: Configured submodule pull strategy to prevent divergence issues
+
+### 📚 Documentation Updates
+- **README.md**: Updated architecture diagram and data pipeline explanation
+- **QUICKSTART.md**: (Pending) Will need updates for new structure
+- Added clear notes about keeping submodule pristine
+
+### 🐛 Bug Fixes
+- Fixed git pull divergent branches error in refresh endpoint
+- Resolved submodule state issues (was 1 ahead, 451 behind)
+
+### Commits
+- (To be added after commit)
+
+---
+
 ## [2.1.0] - 2025-10-11
 
 ### ✨ UI Enhancements
