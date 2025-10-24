@@ -79,9 +79,8 @@ def load_internships_from_csv(csv_path: Path, category: str) -> List[dict]:
             internship['has_phd_emoji'] = '🎓' in emojis
             internship['has_clearance_emoji'] = '🛂' in emojis
             
-            # Create unique job_id using content-based hash with position
-            position = len(internships)  # Position in current parsing
-            content_for_hash = f"{internship['company']}|{internship['role']}|{internship['location']}|{internship['application_url']}|{position}"
+            position = len(internships)
+            content_for_hash = f"{internship['company']}|{internship['role']}|{internship['location']}|{internship['application_url']}"
             job_id = hashlib.sha256(content_for_hash.encode()).hexdigest()[:16]
             internship['job_id'] = job_id
             internship['position'] = position
