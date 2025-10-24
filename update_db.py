@@ -23,8 +23,8 @@ async def update_database():
     }
 
     all_internships = []
-    active_job_ids = []
-    seen_job_ids = set()
+    active_urls = []
+    seen_urls = set()
     PARSED_DATA_DIR = Path('data/parsed')
 
     for category, filename in categories.items():
@@ -37,18 +37,18 @@ async def update_database():
         print(f"Processing {len(internships)} internships from {filename}")
         
         for internship in internships:
-            job_id = internship['job_id']
-            if job_id in seen_job_ids:
-                print(f"  Skipping duplicate: {internship['company']} - {internship['role'][:50]}")
+            url = internship['application_url']
+            if url in seen_urls:
+                print(f"  Skipping duplicate URL: {internship['company']} - {internship['role'][:50]}")
                 continue
             
-            seen_job_ids.add(job_id)
+            seen_urls.add(url)
             await upsert_internship(internship)
-            active_job_ids.append(job_id)
+            active_urls.append(url)
             all_internships.append(internship)
 
     # Mark missing internships as inactive
-    await mark_missing_internships_inactive(active_job_ids)
+    await mark_missing_internships_inactive(active_urls)
     
     print(f"✓ Updated {len(all_internships)} internships in database")
     return len(all_internships)
