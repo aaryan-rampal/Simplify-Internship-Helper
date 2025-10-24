@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-from database import init_db, get_application, update_application, save_resume, get_resume, list_resumes
+from database import init_db, get_application, update_application, save_resume, get_resume, list_resumes, upsert_internship, mark_missing_internships_inactive, get_active_internships
 from models import InternshipWithStatus, ApplicationUpdate, ResumeInfo, RefreshResponse
 
 app = FastAPI(title="Internship Tracker API")
@@ -79,16 +79,24 @@ def load_internships_from_csv(csv_path: Path, category: str) -> List[dict]:
             internship['has_phd_emoji'] = '🎓' in emojis
             internship['has_clearance_emoji'] = '🛂' in emojis
             
-            # Create unique job_id based on company, role, and location
-            job_id = f"{internship['company']}|{internship['role']}|{internship['location']}|{internship['date_posted']}"
+            # Create unique job_id using content-based hash with position
+            position = len(internships)  # Position in current parsing
+            content_for_hash = f"{internship['company']}|{internship['role']}|{internship['location']}|{internship['application_url']}|{position}"
+            job_id = hashlib.sha256(content_for_hash.encode()).hexdigest()[:16]
             internship['job_id'] = job_id
+            internship['position'] = position
             internships.append(internship)
 
     return internships
 
 
 async def load_all_internships() -> List[dict]:
-    """Load all internships from all CSV files"""
+    """Load all active internships from database"""
+    return await get_active_internships()
+
+
+async def parse_and_update_internships() -> List[dict]:
+    """Parse CSV files and update database with new/changed internships"""
     categories = {
         "software_engineering": "software_engineering_internships.csv",
         "data_science": "data_science_ml_internships.csv",
@@ -98,13 +106,20 @@ async def load_all_internships() -> List[dict]:
     }
 
     all_internships = []
+    active_job_ids = []
+
     for category, filename in categories.items():
         csv_path = PARSED_DATA_DIR / filename
         internships = load_internships_from_csv(csv_path, category)
-        all_internships.extend(internships)
+        
+        # Update database with each internship
+        for internship in internships:
+            await upsert_internship(internship)
+            active_job_ids.append(internship['job_id'])
+            all_internships.append(internship)
 
-    # Sort by date posted (newest first)
-    all_internships.sort(key=lambda x: x['date_posted'], reverse=True)
+    # Mark missing internships as inactive
+    await mark_missing_internships_inactive(active_job_ids)
 
     return all_internships
 
@@ -282,7 +297,10 @@ async def refresh_data():
         if result.returncode != 0:
             raise Exception(f"Parser failed: {result.stderr}")
 
-        # Count internships
+        # Parse and update database with new internships
+        await parse_and_update_internships()
+        
+        # Count active internships
         internships = await load_all_internships()
         count = len(internships)
 
@@ -328,7 +346,7 @@ async def get_stats():
         for internship in internships:
             category = internship['category']
             by_category[category] = by_category.get(category, 0) + 1
-            if internship['is_faang_plus'] == 'True':
+            if internship['is_faang_plus']:
                 faang_plus += 1
 
         return {
