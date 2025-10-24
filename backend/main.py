@@ -13,8 +13,8 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-from database import init_db, get_application, update_application, save_resume, get_resume, list_resumes, upsert_internship, mark_missing_internships_inactive, get_active_internships
-from models import InternshipWithStatus, ApplicationUpdate, ResumeInfo, RefreshResponse
+from database import init_db, update_application, save_resume, get_resume, list_resumes, upsert_internship, mark_missing_internships_inactive, get_active_internships
+from models import Internship, ApplicationUpdate, ResumeInfo, RefreshResponse
 
 app = FastAPI(title="Internship Tracker API")
 
@@ -79,11 +79,6 @@ def load_internships_from_csv(csv_path: Path, category: str) -> List[dict]:
             internship['has_phd_emoji'] = '🎓' in emojis
             internship['has_clearance_emoji'] = '🛂' in emojis
             
-            position = len(internships)
-            content_for_hash = f"{internship['company']}|{internship['role']}|{internship['location']}|{internship['application_url']}"
-            job_id = hashlib.sha256(content_for_hash.encode()).hexdigest()[:16]
-            internship['job_id'] = job_id
-            internship['position'] = position
             internships.append(internship)
 
     return internships
@@ -105,7 +100,7 @@ async def parse_and_update_internships() -> List[dict]:
     }
 
     all_internships = []
-    active_job_ids = []
+    active_urls = []
 
     for category, filename in categories.items():
         csv_path = PARSED_DATA_DIR / filename
@@ -114,11 +109,11 @@ async def parse_and_update_internships() -> List[dict]:
         # Update database with each internship
         for internship in internships:
             await upsert_internship(internship)
-            active_job_ids.append(internship['job_id'])
+            active_urls.append(internship['application_url'])
             all_internships.append(internship)
 
     # Mark missing internships as inactive
-    await mark_missing_internships_inactive(active_job_ids)
+    await mark_missing_internships_inactive(active_urls)
 
     return all_internships
 
@@ -135,7 +130,7 @@ async def root():
     return {"message": "Internship Tracker API", "version": "1.0.0"}
 
 
-@app.get("/api/internships", response_model=List[InternshipWithStatus])
+@app.get("/api/internships", response_model=List[Internship])
 async def get_internships(
     category: Optional[str] = Query(None, description="Filter by category"),
     date_from: Optional[str] = Query(None, description="Filter by start date (ISO format)"),
@@ -170,33 +165,18 @@ async def get_internships(
         if is_faang_plus is not None:
             internships = [i for i in internships if i['is_faang_plus'] == str(is_faang_plus)]
 
-        # Enrich with application status
-        enriched_internships = []
-        for internship in internships:
-            job_id = internship['job_id']
-            app_status = await get_application(job_id)
-
-            enriched = {
-                **internship,
-                'applied': app_status['applied'] if app_status else False,
-                'resume_hash': app_status.get('resume_hash') if app_status else None,
-                'applied_date': app_status.get('applied_date') if app_status else None,
-                'notes': app_status.get('notes') if app_status else None,
-            }
-            enriched_internships.append(enriched)
-
-        return enriched_internships
+        return internships
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/internships/{job_id}/apply")
-async def mark_application(job_id: str, update: ApplicationUpdate):
+@app.post("/api/internships/{internship_id}/apply")
+async def mark_application(internship_id: str, update: ApplicationUpdate):
     """Mark a job as applied/not applied"""
     try:
         await update_application(
-            job_id=job_id,
+            internship_id=internship_id,
             applied=update.applied,
             resume_hash=update.resume_hash,
             notes=update.notes
