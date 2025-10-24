@@ -5,7 +5,7 @@ const API_BASE = 'http://localhost:8000/api';
 let allInternships = [];
 let filteredInternships = [];
 let allResumes = [];
-let currentJobIdForResume = null;
+let currentInternshipIdForResume = null;
 let selectedCategories = new Set();
 let selectedLocations = new Set();
 let selectedCompanies = new Set();
@@ -78,42 +78,42 @@ function setupTableEventListeners() {
     // Apply checkbox
     document.querySelectorAll('.apply-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const jobId = this.dataset.jobId;
-            const internship = allInternships.find(i => i.job_id === jobId);
-            if (!internship || !internship.job_id) {
-                console.error('Invalid internship data:', {jobId, internship});
+            const internshipId = this.dataset.internshipId;
+            const internship = allInternships.find(i => i.id === internshipId);
+            if (!internship || !internship.id) {
+                console.error('Invalid internship data:', {internshipId, internship});
                 showToast('Error: Invalid job data', 'error');
                 return;
             }
-            toggleApplied(jobId, this.checked);
+            toggleApplied(internshipId, this.checked);
         });
     });
 
     // Resume select
     document.querySelectorAll('.resume-select').forEach(select => {
         select.addEventListener('change', function() {
-            const jobId = this.dataset.jobId;
-            const internship = allInternships.find(i => i.job_id === jobId);
-            if (!internship || !internship.job_id) {
-                console.error('Invalid internship data:', {jobId, internship});
+            const internshipId = this.dataset.internshipId;
+            const internship = allInternships.find(i => i.id === internshipId);
+            if (!internship || !internship.id) {
+                console.error('Invalid internship data:', {internshipId, internship});
                 showToast('Error: Invalid job data', 'error');
                 return;
             }
-            selectResume(jobId, this.value);
+            selectResume(internshipId, this.value);
         });
     });
 
     // Notes button
     document.querySelectorAll('.notes-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const jobId = this.dataset.jobId;
-            const internship = allInternships.find(i => i.job_id === jobId);
-            if (!internship || !internship.job_id) {
-                console.error('Invalid internship data:', {jobId, internship});
+            const internshipId = this.dataset.internshipId;
+            const internship = allInternships.find(i => i.id === internshipId);
+            if (!internship || !internship.id) {
+                console.error('Invalid internship data:', {internshipId, internship});
                 showToast('Error: Invalid job data', 'error');
                 return;
             }
-            openNotes(jobId);
+            openNotes(internshipId);
         });
     });
 }
@@ -359,11 +359,11 @@ function renderInternships() {
     console.log('Rendering internships. Total filtered:', filteredInternships.length);
     tbody.innerHTML = filteredInternships.map((internship, index) => {
         return `
-<tr class="${internship.applied ? 'applied' : ''}" data-job-id="${internship.job_id}">
+<tr class="${internship.applied ? 'applied' : ''}" data-job-id="${internship.id}">
             <td>
                 <input type="checkbox"
                        class="apply-checkbox"
-                       data-job-id="${internship.job_id}"
+                       data-job-id="${internship.id}"
                        ${internship.applied ? 'checked' : ''}>
             </td>
              <td>
@@ -383,13 +383,13 @@ function renderInternships() {
                 </div>
             </td>
             <td>
-                <select class="resume-select" data-job-id="${internship.job_id}">
+                <select class="resume-select" data-job-id="${internship.id}">
                     <option value="">No resume</option>
                     ${allResumes.map(resume => '<option value="' + resume.hash + '" ' + (internship.resume_hash === resume.hash ? 'selected' : '') + '>' + escapeHtml(resume.original_filename) + '</option>').join('')}
                 </select>
             </td>
             <td>
-                <button class="btn btn-secondary btn-sm notes-btn" data-job-id="${internship.job_id}">
+                <button class="btn btn-secondary btn-sm notes-btn" data-job-id="${internship.id}">
                     📝 Notes
                 </button>
             </td>
@@ -409,9 +409,9 @@ function updateStats() {
 }
 
 // Toggle applied status
-async function toggleApplied(jobId, applied) {
+async function toggleApplied(internshipId, applied) {
     try {
-        const response = await fetch(`${API_BASE}/internships/${encodeURIComponent(jobId)}/apply`, {
+        const response = await fetch(`${API_BASE}/internships/${encodeURIComponent(internshipId)}/apply`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -422,7 +422,7 @@ async function toggleApplied(jobId, applied) {
         if (!response.ok) throw new Error('Failed to update application status');
 
         // Update local state
-        const internship = allInternships.find(i => i.job_id === jobId);
+        const internship = allInternships.find(i => i.id === internshipId);
         if (internship) {
             internship.applied = applied;
             applyFilters();
@@ -436,9 +436,9 @@ async function toggleApplied(jobId, applied) {
 }
 
 // Select resume for application
-async function selectResume(jobId, resumeHash) {
+async function selectResume(internshipId, resumeHash) {
     try {
-        const response = await fetch(`${API_BASE}/internships/${encodeURIComponent(jobId)}/apply`, {
+        const response = await fetch(`${API_BASE}/internships/${encodeURIComponent(internshipId)}/apply`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -452,7 +452,7 @@ async function selectResume(jobId, resumeHash) {
         if (!response.ok) throw new Error('Failed to update resume');
 
         // Update local state
-        const internship = allInternships.find(i => i.job_id === jobId);
+        const internship = allInternships.find(i => i.id === internshipId);
         if (internship) {
             internship.resume_hash = resumeHash || null;
             internship.applied = true;
@@ -600,16 +600,16 @@ function closeModal() {
     document.getElementById('resumeModal').style.display = 'none';
 }
 
-function openNotes(jobId) {
+function openNotes(internshipId) {
     const notes = prompt('Add notes for this application:');
     if (notes !== null) {
-        updateNotes(jobId, notes);
+        updateNotes(internshipId, notes);
     }
 }
 
-async function updateNotes(jobId, notes) {
+async function updateNotes(internshipId, notes) {
     try {
-        const response = await fetch(`${API_BASE}/internships/${encodeURIComponent(jobId)}/apply`, {
+        const response = await fetch(`${API_BASE}/internships/${encodeURIComponent(internshipId)}/apply`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
