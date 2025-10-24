@@ -20,17 +20,16 @@ async def init_db():
     """Initialize database tables"""
     db = await get_db()
 
-    # Create internships table for permanent storage
+    # Create internships table with embedded application fields
     await db.execute("""
         CREATE TABLE IF NOT EXISTS internships (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            job_id TEXT UNIQUE NOT NULL,
+            id TEXT PRIMARY KEY,
             company TEXT NOT NULL,
             role TEXT NOT NULL,
             location TEXT NOT NULL,
             terms TEXT,
             is_faang_plus BOOLEAN DEFAULT FALSE,
-            application_url TEXT,
+            application_url TEXT NOT NULL UNIQUE,
             base_url TEXT,
             age_raw TEXT,
             date_posted TEXT,
@@ -39,22 +38,13 @@ async def init_db():
             emojis TEXT,
             has_phd_emoji BOOLEAN DEFAULT FALSE,
             has_clearance_emoji BOOLEAN DEFAULT FALSE,
-            position INTEGER,
             is_active BOOLEAN DEFAULT TRUE,
-            last_seen TEXT NOT NULL,
-            created_at TEXT NOT NULL
-        )
-    """)
-
-    # Create applications table
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS applications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            job_id TEXT UNIQUE NOT NULL,
             applied BOOLEAN DEFAULT FALSE,
             resume_hash TEXT,
             applied_date TEXT,
             notes TEXT,
+            last_seen TEXT NOT NULL,
+            created_at TEXT NOT NULL,
             FOREIGN KEY (resume_hash) REFERENCES resumes(hash)
         )
     """)
@@ -71,14 +61,6 @@ async def init_db():
 
     # Create indexes for faster lookups
     await db.execute("""
-        CREATE INDEX IF NOT EXISTS idx_job_id ON applications(job_id)
-    """)
-    
-    await db.execute("""
-        CREATE INDEX IF NOT EXISTS idx_internship_job_id ON internships(job_id)
-    """)
-    
-    await db.execute("""
         CREATE INDEX IF NOT EXISTS idx_internship_active ON internships(is_active)
     """)
     
@@ -92,33 +74,18 @@ async def init_db():
     print(f"Database initialized at {DB_PATH}")
 
 
-async def get_application(job_id: str):
-    """Get application status for a job"""
-    db = await get_db()
-    cursor = await db.execute(
-        "SELECT * FROM applications WHERE job_id = ?", (job_id,)
-    )
-    result = await cursor.fetchone()
-    await db.close()
-    return dict(result) if result else None
-
-
-async def update_application(job_id: str, applied: bool, resume_hash: str = None, notes: str = None):
-    """Update or create application status"""
+async def update_application(internship_id: str, applied: bool, resume_hash: str = None, notes: str = None):
+    """Update application status for an internship"""
     from datetime import datetime
 
     db = await get_db()
     applied_date = datetime.now().isoformat() if applied else None
 
     await db.execute("""
-        INSERT INTO applications (job_id, applied, resume_hash, applied_date, notes)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(job_id) DO UPDATE SET
-            applied = excluded.applied,
-            resume_hash = excluded.resume_hash,
-            applied_date = excluded.applied_date,
-            notes = excluded.notes
-    """, (job_id, applied, resume_hash, applied_date, notes))
+        UPDATE internships
+        SET applied = ?, resume_hash = ?, applied_date = ?, notes = ?
+        WHERE id = ?
+    """, (applied, resume_hash, applied_date, notes, internship_id))
 
     await db.commit()
     await db.close()
@@ -161,79 +128,81 @@ async def list_resumes():
 
 
 async def upsert_internship(internship_data: dict):
-    """Insert or update internship, maintaining position and active status"""
+    """Insert or update internship by URL, skip if already exists"""
     from datetime import datetime
+    import hashlib
     
     db = await get_db()
     now = datetime.now().isoformat()
     
-    # Check if internship exists
+    url = internship_data['application_url']
+    internship_id = hashlib.sha256(url.encode()).hexdigest()[:16]
+    
+    # Check if internship with this URL already exists
     cursor = await db.execute(
-        "SELECT * FROM internships WHERE job_id = ?", 
-        (internship_data['job_id'],)
+        "SELECT id FROM internships WHERE application_url = ?", 
+        (url,)
     )
     existing = await cursor.fetchone()
     
     if existing:
-        # Update existing internship, preserve is_active status
+        # Update existing internship, preserve application status
         await db.execute("""
             UPDATE internships SET
                 company = ?, role = ?, location = ?, terms = ?, is_faang_plus = ?,
-                application_url = ?, base_url = ?, age_raw = ?, date_posted = ?,
+                base_url = ?, age_raw = ?, date_posted = ?,
                 source_file = ?, category = ?, emojis = ?, has_phd_emoji = ?,
-                has_clearance_emoji = ?, position = ?, last_seen = ?
-            WHERE job_id = ?
+                has_clearance_emoji = ?, last_seen = ?
+            WHERE application_url = ?
         """, (
             internship_data['company'], internship_data['role'], internship_data['location'],
             internship_data.get('terms', ''), internship_data['is_faang_plus'],
-            internship_data['application_url'], internship_data['base_url'],
-            internship_data['age_raw'], internship_data['date_posted'],
+            internship_data['base_url'], internship_data['age_raw'], internship_data['date_posted'],
             internship_data['source_file'], internship_data['category'],
             internship_data.get('emojis', ''), internship_data.get('has_phd_emoji', False),
-            internship_data.get('has_clearance_emoji', False), internship_data['position'],
-            now, internship_data['job_id']
+            internship_data.get('has_clearance_emoji', False), now, url
         ))
     else:
         # Insert new internship
         await db.execute("""
             INSERT INTO internships (
-                job_id, company, role, location, terms, is_faang_plus,
+                id, company, role, location, terms, is_faang_plus,
                 application_url, base_url, age_raw, date_posted, source_file,
                 category, emojis, has_phd_emoji, has_clearance_emoji,
-                position, is_active, last_seen, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                is_active, last_seen, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            internship_data['job_id'], internship_data['company'], internship_data['role'],
+            internship_id, internship_data['company'], internship_data['role'],
             internship_data['location'], internship_data.get('terms', ''), 
-            internship_data['is_faang_plus'], internship_data['application_url'],
+            internship_data['is_faang_plus'], url,
             internship_data['base_url'], internship_data['age_raw'],
             internship_data['date_posted'], internship_data['source_file'],
             internship_data['category'], internship_data.get('emojis', ''),
             internship_data.get('has_phd_emoji', False), 
             internship_data.get('has_clearance_emoji', False),
-            internship_data['position'], True, now, now
+            True, now, now
         ))
     
     await db.commit()
     await db.close()
 
 
-async def mark_missing_internships_inactive(active_job_ids: list):
+async def mark_missing_internships_inactive(active_urls: list):
     """Mark internships as inactive if not in the active list"""
     from datetime import datetime
     
-    if not active_job_ids:
+    if not active_urls:
         return
     
     db = await get_db()
     now = datetime.now().isoformat()
     
-    placeholders = ','.join(['?' for _ in active_job_ids])
+    placeholders = ','.join(['?' for _ in active_urls])
     await db.execute(f"""
         UPDATE internships 
         SET is_active = FALSE, last_seen = ?
-        WHERE job_id NOT IN ({placeholders}) AND is_active = TRUE
-    """, [now] + active_job_ids)
+        WHERE application_url NOT IN ({placeholders}) AND is_active = TRUE
+    """, [now] + active_urls)
     
     await db.commit()
     await db.close()
@@ -243,9 +212,9 @@ async def get_active_internships() -> list:
     """Get all active internships from database"""
     db = await get_db()
     cursor = await db.execute("""
-        SELECT * FROM internships 
+        SELECT * FROM internships
         WHERE is_active = TRUE 
-        ORDER BY category, position
+        ORDER BY category
     """)
     results = await cursor.fetchall()
     await db.close()
