@@ -8,8 +8,7 @@ from datetime import datetime
 
 class Internship(BaseModel):
     """Internship data model"""
-    job_id: str
-    source_file: str
+    id: str
     company: str
     role: str
     location: str
@@ -19,14 +18,11 @@ class Internship(BaseModel):
     base_url: str
     age_raw: str
     date_posted: str
-    category: str  # Added to identify which CSV it came from
+    source_file: str
+    category: str
     emojis: str = ""
     has_phd_emoji: bool = False
     has_clearance_emoji: bool = False
-
-
-class InternshipWithStatus(Internship):
-    """Internship with application status"""
     applied: bool = False
     resume_hash: Optional[str] = None
     applied_date: Optional[str] = None
@@ -38,6 +34,11 @@ class ApplicationUpdate(BaseModel):
     applied: bool
     resume_hash: Optional[str] = None
     notes: Optional[str] = None
+
+
+class InternshipResponse(Internship):
+    """Internship response model (same as Internship now)"""
+    pass
 
 
 class ResumeInfo(BaseModel):
