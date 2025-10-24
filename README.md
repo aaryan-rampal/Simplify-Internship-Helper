@@ -1,17 +1,19 @@
 # Internship Tracker
 
+> 🤖 **AI Agents**: Please read [AGENTS.md](./AGENTS.md) for detailed development instructions before making changes.
+
 A web application to track and manage Summer 2026 internship applications from the SimplifyJobs Summer2026-Internships repository.
 
 ## Features
 
-- ✅ View internships from 5 categories (Software Engineering, Data Science/ML, Quantitative Finance, Product Management, Hardware Engineering)
-- 🔍 Filter by category, location, company, date range, and FAANG+ status
-- ✅ Mark jobs as applied with checkbox
-- 📄 Upload resumes with automatic deduplication (content-based hashing)
-- 🔗 View both Simplify and direct application URLs
-- 🔄 Refresh data from GitHub with one click (git pull + re-parse)
-- 📝 Add notes to applications
-- 💾 Persistent SQLite database
+- View internships from 5 categories (Software Engineering, Data Science/ML, Quantitative Finance, Product Management, Hardware Engineering)
+- Filter by category, location, company, date range, and FAANG+ status
+- Mark jobs as applied with checkbox
+- Upload resumes with automatic deduplication (content-based hashing)
+- View both Simplify and direct application URLs
+- Refresh data from GitHub with one click (git pull + re-parse)
+- Add notes to applications
+- Persistent SQLite database
 
 ## Project Structure
 
@@ -40,64 +42,63 @@ job-helper/
 └── data.db                  # SQLite database (auto-created)
 ```
 
-## Setup & Installation
+## 🚀 Quick Start (5 minutes)
 
-### 1. Clone Repository with Submodules
+### Prerequisites
+
+- Python 3.11+
+- Conda (Miniconda/Anaconda)
+- Git
+
+### 1️⃣ Clone & Initialize
 
 ```bash
-# Clone with submodules
 git clone --recurse-submodules <repo-url>
 cd job-helper
 
-# OR if already cloned without submodules:
+# If already cloned without submodules:
 git submodule update --init --recursive
 ```
 
-### 2. Create Conda Environment
+### 2️⃣ Setup Environment
 
 ```bash
-# Create the environment
+# Create conda environment
 conda env create -f environment.yml
 
-# Activate the environment
+# Activate environment
 conda activate internship-tracker
 ```
 
-Alternatively, if you prefer pip:
-```bash
-cd backend
-pip install -r requirements.txt
-```
+### 3️⃣ Start Services
 
-### 3. Start the Backend Server
-
-**Option A: Use the startup script (recommended)**
 ```bash
+# Start backend (recommended)
 ./start.sh
-```
 
-**Option B: Manual start**
-```bash
-# Activate conda environment first
+# OR start manually:
 conda activate internship-tracker
-
-# Start the server
-cd backend
-python main.py
+cd backend && python main.py
 ```
 
-The API will be available at `http://localhost:8000`
-
-### 4. Open the Frontend
-
-Open `frontend/index.html` directly in your web browser, or use a simple HTTP server:
+### 4️⃣ Open Web App
 
 ```bash
-cd frontend
-python -m http.server 8080
+# Option A: Open directly
+open frontend/index.html
+
+# Option B: HTTP server
+cd frontend && python -m http.server 8080
+# Then visit http://localhost:8080
 ```
 
-Then visit `http://localhost:8080`
+### 5️⃣ Verify Setup
+
+- Backend running at `http://localhost:8000`
+- Frontend loads internship data
+- "Refresh Data" button works
+
+---
 
 ## Usage
 
@@ -141,6 +142,7 @@ Then visit `http://localhost:8080`
 ## Database Schema
 
 ### Applications Table
+
 - `id` - Auto-increment primary key
 - `job_id` - Unique job identifier
 - `applied` - Boolean status
@@ -149,6 +151,7 @@ Then visit `http://localhost:8080`
 - `notes` - Text field
 
 ### Resumes Table
+
 - `hash` - SHA-256 hash (primary key)
 - `original_filename` - Original file name
 - `file_path` - Path to stored file
@@ -181,9 +184,11 @@ This project uses git submodules to manage the internships data:
 ### Updating Internships Data
 
 **Via UI (Recommended):**
+
 - Click the "Refresh Data" button in the web interface
 
 **Manually:**
+
 ```bash
 # Pull latest from submodule
 cd data/internships
@@ -199,14 +204,132 @@ git commit -m "chore: Update internships data submodule"
 ```
 
 ### Important Notes
+
 - **Submodule is pristine**: Never add custom files to `data/internships/`
 - **Parser lives outside**: Custom scripts are in `data/parser/`
 - **CSVs are generated**: Files in `data/parsed/` are git-ignored and auto-generated
 - The internships data is sourced from: https://github.com/SimplifyJobs/Summer2026-Internships
 
-## Technologies Used
+## 🛠️ Command Reference
+
+### Essential Commands
+
+```bash
+# Check submodule status
+git submodule status
+
+# Initialize/update submodules
+git submodule update --init --recursive
+
+# Manual data refresh
+cd data/internships && git pull origin dev && cd ../..
+python3 data/parser/parse_internships.py
+python3 update_db.py
+
+# Check environment
+conda env list
+conda activate internship-tracker
+
+# Port check
+lsof -i :8000
+```
+
+### Development Workflow
+
+```bash
+# Start development server
+./start.sh
+
+# Test API endpoints
+curl http://localhost:8000/api/internships
+curl http://localhost:8000/api/stats
+
+# View API docs
+open http://localhost:8000/docs
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Submodule Issues
+
+**Problem**: `git submodule status` shows `-` or `+`
+
+```bash
+# Fix: Initialize submodules
+git submodule update --init --recursive
+
+# Fix: Update to latest
+cd data/internships && git pull origin dev
+```
+
+### Environment Issues
+
+**Problem**: Command not found or import errors
+
+```bash
+# Verify conda environment
+conda env list
+conda activate internship-tracker
+
+# Recreate environment if needed
+conda env remove -n internship-tracker
+conda env create -f environment.yml
+```
+
+### Port Conflicts
+
+**Problem**: Port 8000 already in use
+
+```bash
+# Check what's using port 8000
+lsof -i :8000
+
+# Kill process (replace PID)
+kill -9 <PID>
+
+# Or change port in backend/main.py
+```
+
+### Data Refresh Issues
+
+**Problem**: "Refresh Data" button doesn't work
+
+```bash
+# Manual refresh sequence
+cd data/internships && git pull origin dev && cd ../..
+python3 data/parser/parse_internships.py
+python3 update_db.py
+```
+
+### Frontend Loading Issues
+
+**Problem**: "Failed to load internships"
+
+- Ensure backend is running: `curl http://localhost:8000/api/internships`
+- Check browser console (F12) for errors
+- Verify CORS is enabled (default in main.py)
+
+---
+
+## 📊 API Endpoints
+
+- `GET /api/internships` - Get all internships with filters
+- `POST /api/internships/{job_id}/apply` - Update application status
+- `POST /api/resumes/upload` - Upload a resume
+- `GET /api/resumes` - List all resumes
+- `POST /api/refresh` - Refresh data from GitHub
+- `GET /api/categories` - Get available categories
+- `GET /api/stats` - Get statistics
+- `GET /docs` - Interactive API documentation
+
+---
+
+## 🏗️ Technologies Used
 
 - **Backend**: FastAPI, SQLite, aiosqlite
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Storage**: Content-based file deduplication with SHA-256
 - **Data Source**: Git submodule (SimplifyJobs/Summer2026-Internships)
+- **Environment**: Conda (Python 3.11)
