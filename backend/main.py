@@ -140,9 +140,21 @@ async def get_internships(
     is_faang_plus: Optional[bool] = Query(None, description="Filter FAANG+ companies"),
 ):
     """Get all internships with optional filters"""
+    import json
+    
     try:
         # Load all internships
         internships = await load_all_internships()
+
+        # Process full_locations JSON field
+        for internship in internships:
+            if internship.get('full_locations'):
+                try:
+                    internship['full_locations'] = json.loads(internship['full_locations'])
+                except (json.JSONDecodeError, TypeError):
+                    internship['full_locations'] = [internship['location']]
+            else:
+                internship['full_locations'] = [internship['location']]
 
         # Apply filters
         if category:

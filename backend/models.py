@@ -12,6 +12,7 @@ class Internship(BaseModel):
     company: str
     role: str
     location: str
+    full_locations: List[str] = []
     terms: str = ""
     is_faang_plus: bool
     application_url: str
