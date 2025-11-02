@@ -214,7 +214,19 @@ async def get_active_internships() -> list:
     cursor = await db.execute("""
         SELECT * FROM internships
         WHERE is_active = TRUE 
-        ORDER BY category
+        ORDER BY date_posted DESC, company ASC
+    """)
+    results = await cursor.fetchall()
+    await db.close()
+    return [dict(row) for row in results]
+
+
+async def get_all_internships() -> list:
+    """Get all internships from database (both active and inactive)"""
+    db = await get_db()
+    cursor = await db.execute("""
+        SELECT * FROM internships
+        ORDER BY date_posted DESC, company ASC
     """)
     results = await cursor.fetchall()
     await db.close()

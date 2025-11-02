@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-from database import init_db, update_application, save_resume, get_resume, list_resumes, upsert_internship, mark_missing_internships_inactive, get_active_internships
+from database import init_db, update_application, save_resume, get_resume, list_resumes, upsert_internship, mark_missing_internships_inactive, get_active_internships, get_all_internships
 from models import Internship, ApplicationUpdate, ResumeInfo, RefreshResponse
 
 app = FastAPI(title="Internship Tracker API")
@@ -85,8 +85,8 @@ def load_internships_from_csv(csv_path: Path, category: str) -> List[dict]:
 
 
 async def load_all_internships() -> List[dict]:
-    """Load all active internships from database"""
-    return await get_active_internships()
+    """Load all internships from database (both active and inactive)"""
+    return await get_all_internships()
 
 
 async def parse_and_update_internships() -> List[dict]:
