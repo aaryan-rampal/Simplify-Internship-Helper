@@ -323,7 +323,13 @@ function applyFilters() {
 
     filteredInternships = allInternships.filter(internship => {
         if (selectedCategories.size > 0 && !selectedCategories.has(internship.category)) return false;
-        if (selectedLocations.size > 0 && !selectedLocations.has(internship.location)) return false;
+        if (selectedLocations.size > 0) {
+            const internshipLocations = internship.full_locations && internship.full_locations.length > 0 
+                ? internship.full_locations 
+                : [internship.location];
+            const hasMatchingLocation = internshipLocations.some(loc => selectedLocations.has(loc));
+            if (!hasMatchingLocation) return false;
+        }
         if (selectedCompanies.size > 0 && !selectedCompanies.has(internship.company)) return false;
         if (dateFrom && internship.date_posted < dateFrom) return false;
         if (dateTo && internship.date_posted > dateTo) return false;
@@ -378,7 +384,15 @@ function populateFilterDropdowns() {
     const companies = new Set();
     
     filteredInternships.forEach(internship => {
-        locations.add(internship.location);
+        // Add individual locations from full_locations array
+        if (internship.full_locations && internship.full_locations.length > 0) {
+            internship.full_locations.forEach(location => {
+                locations.add(location);
+            });
+        } else {
+            // Fallback to the location field if full_locations is not available
+            locations.add(internship.location);
+        }
         companies.add(internship.company);
     });
     
@@ -520,6 +534,53 @@ function toggleDropdown(type) {
     }
 }
 
+// Render location with expandable functionality
+function renderLocation(location, fullLocations) {
+    if (!fullLocations || fullLocations.length <= 1) {
+        return escapeHtml(location);
+    }
+    
+    // Check if location has "+X more" format
+    const match = location.match(/^(.+?)\s\+(\d+)\s+more$/);
+    if (!match) {
+        return escapeHtml(location);
+    }
+    
+    const baseLocation = match[1];
+    const moreCount = parseInt(match[2]);
+    
+    return `
+        <div class="location-container">
+            <span class="location-text">${escapeHtml(baseLocation)}</span>
+            <button class="location-expand-btn" onclick="toggleLocations(this)">
+                +${moreCount} more
+            </button>
+            <div class="location-full-list" style="display: none;">
+                ${fullLocations.map(loc => `<div class="location-item">${escapeHtml(loc)}</div>`).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Toggle location expansion
+function toggleLocations(button) {
+    const container = button.closest('.location-container');
+    const fullList = container.querySelector('.location-full-list');
+    const isExpanded = fullList.style.display !== 'none';
+    
+    if (isExpanded) {
+        fullList.style.display = 'none';
+        button.textContent = button.textContent.replace(/\d+ locations?/, (match) => {
+            const count = parseInt(match) - 1;
+            return `+${count} more`;
+        });
+    } else {
+        fullList.style.display = 'block';
+        const locationCount = fullList.querySelectorAll('.location-item').length;
+        button.textContent = `${locationCount} locations`;
+    }
+}
+
 // Render internships table
 function renderInternships(resetContent = true) {
     const tbody = document.getElementById('internshipsBody');
@@ -563,7 +624,7 @@ function renderInternshipRows(internships, resetContent = true) {
                  ${internship.is_faang_plus === 'True' ? '<span class="badge badge-faang">🔥 FAANG+</span>' : ''}
              </td>
              <td>${escapeHtml(stripEmojis(internship.role))}</td>
-            <td>${escapeHtml(internship.location)}</td>
+             <td class="location-cell" data-full-locations='${escapeHtml(JSON.stringify(internship.full_locations || []))}'>${renderLocation(internship.location, internship.full_locations || [])}</td>
              <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
              <td style="font-size: 18px; text-align: center;">${internship.emojis || ''}</td>
              <td>${formatDate(internship.date_posted)} ${internship.is_active === false ? '<span class="badge badge-inactive">Inactive</span>' : ''}</td>
