@@ -3,7 +3,7 @@
 ## 🛠️ Build/Lint/Test Commands
 ```bash
 # Environment setup
-conda env update -f environment.yml && conda activate internship-tracker
+python3 -m venv venv && source venv/bin/activate && pip install -r backend/requirements.txt
 
 # Start backend server
 ./start.sh  # or: cd backend && python main.py
@@ -27,9 +27,10 @@ python3 update_db.py
 - **Database**: SQLite with aiosqlite, schema in `database.py`, migrations handled there
 
 ## 🌍 Environment Setup
-- **ALWAYS** use conda environment `internship-tracker` from `environment.yml`
-- Activate: `conda activate internship-tracker`
+- **ALWAYS** use virtual environment `venv` 
+- Activate: `source venv/bin/activate`
 - Python 3.11 required
+- Install dependencies: `pip install -r backend/requirements.txt`
 
 ## 🚨 Critical Rules
 - **NEVER** modify files in `data/internships/` submodule (read-only upstream)

@@ -47,13 +47,12 @@ job-helper/
 ### Prerequisites
 
 - Python 3.11+
-- Conda (Miniconda/Anaconda)
 - Git
 
 ### 1️⃣ Clone & Initialize
 
 ```bash
-git clone --recurse-submodules <repo-url>
+git clone --recurse-submodules https://github.com/aaryan-rampal/Simplify-Internship-Helper
 cd job-helper
 
 # If already cloned without submodules:
@@ -63,11 +62,14 @@ git submodule update --init --recursive
 ### 2️⃣ Setup Environment
 
 ```bash
-# Create conda environment
-conda env create -f environment.yml
+# Create virtual environment
+python3 -m venv venv
 
 # Activate environment
-conda activate internship-tracker
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r backend/requirements.txt
 ```
 
 ### 3️⃣ Start Services
@@ -77,7 +79,7 @@ conda activate internship-tracker
 ./start.sh
 
 # OR start manually:
-conda activate internship-tracker
+source venv/bin/activate
 cd backend && python main.py
 ```
 
@@ -129,26 +131,26 @@ cd frontend && python -m http.server 8080
   3. Regenerate CSV files in data/parsed/
   4. Reload internships in the UI
 
-## API Endpoints
 
-- `GET /api/internships` - Get all internships with filters
-- `POST /api/internships/{job_id}/apply` - Update application status
-- `POST /api/resumes/upload` - Upload a resume
-- `GET /api/resumes` - List all resumes
-- `POST /api/refresh` - Refresh data from GitHub
-- `GET /api/categories` - Get available categories
-- `GET /api/stats` - Get statistics
 
 ## Database Schema
 
-### Applications Table
+### Internships Table (merged schema)
 
-- `id` - Auto-increment primary key
-- `job_id` - Unique job identifier
-- `applied` - Boolean status
+- `id` - Text primary key (URL-based unique identifier)
+- `company` - Company name
+- `role` - Job role/title
+- `location` - Primary location
+- `full_locations` - All available locations (JSON)
+- `category` - Job category (SW, DS/ML, Quant, PM, HW)
+- `posted_date` - When job was posted
+- `simplify_url` - SimplifyJobs application URL
+- `direct_url` - Direct application URL
+- `active` - Boolean status (true = currently active)
+- `applied` - Boolean status (true = user has applied)
 - `resume_hash` - FK to resumes table
-- `applied_date` - Timestamp
-- `notes` - Text field
+- `applied_date` - Timestamp when application was submitted
+- `notes` - User notes about the application
 
 ### Resumes Table
 
@@ -227,8 +229,7 @@ python3 data/parser/parse_internships.py
 python3 update_db.py
 
 # Check environment
-conda env list
-conda activate internship-tracker
+source venv/bin/activate
 
 # Port check
 lsof -i :8000
@@ -269,13 +270,14 @@ cd data/internships && git pull origin dev
 **Problem**: Command not found or import errors
 
 ```bash
-# Verify conda environment
-conda env list
-conda activate internship-tracker
+# Verify virtual environment
+source venv/bin/activate
 
 # Recreate environment if needed
-conda env remove -n internship-tracker
-conda env create -f environment.yml
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
 ### Port Conflicts
@@ -303,6 +305,70 @@ python3 data/parser/parse_internships.py
 python3 update_db.py
 ```
 
+### Virtual Environment Issues
+
+**Problem**: Python command not found or wrong Python version
+
+```bash
+# Ensure venv is activated
+source venv/bin/activate
+
+# Check Python version
+python --version  # Should be 3.11+
+
+# Recreate if needed
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+### Submodule Issues
+
+**Problem**: Missing data or submodule errors
+
+```bash
+# Check submodule status
+git submodule status
+
+# Initialize submodules
+git submodule update --init --recursive
+
+# Reset submodule to clean state
+cd data/internships
+git reset --hard HEAD
+git clean -fd
+cd ../..
+```
+
+### Database Issues
+
+**Problem**: Database errors or missing data
+
+```bash
+# Remove and recreate database
+rm data.db
+python3 update_db.py
+
+# Check database permissions
+ls -la data.db
+```
+
+### Frontend Issues
+
+**Problem**: CORS errors or connection refused
+
+```bash
+# Check if backend is running
+curl http://localhost:8000/api/internships
+
+# Check port usage
+lsof -i :8000
+
+# Kill process on port 8000 if needed
+kill -9 $(lsof -t -i:8000)
+```
+
 ### Frontend Loading Issues
 
 **Problem**: "Failed to load internships"
@@ -316,7 +382,7 @@ python3 update_db.py
 ## 📊 API Endpoints
 
 - `GET /api/internships` - Get all internships with filters
-- `POST /api/internships/{job_id}/apply` - Update application status
+- `POST /api/internships/{id}/apply` - Update application status
 - `POST /api/resumes/upload` - Upload a resume
 - `GET /api/resumes` - List all resumes
 - `POST /api/refresh` - Refresh data from GitHub
@@ -332,4 +398,4 @@ python3 update_db.py
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Storage**: Content-based file deduplication with SHA-256
 - **Data Source**: Git submodule (SimplifyJobs/Summer2026-Internships)
-- **Environment**: Conda (Python 3.11)
+- **Environment**: Python 3.11 virtual environment
