@@ -10,6 +10,18 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import re
 import sys
+import json
+
+# Configuration for location parsing
+EXCLUDED_LOCATION_PATTERNS = [
+    '50 locations', 'Multiple locations', '32 locations', '14 locations', 
+    '13 locations', '11 locations', '5 locations', '4 locations'
+]
+
+EXCLUDED_LOCATION_PREFIXES = [
+    'locations', '50 locations', '32 locations', '14 locations', 
+    '13 locations', '11 locations', '5 locations', '4 locations'
+]
 
 
 def parse_age(age_str):
@@ -64,12 +76,63 @@ def extract_urls(html):
     
     for link in links:
         href = link.get('href', '')
-        if 'simplify.jobs/p/' in href:
+        if 'simplify.jobs/p/' in str(href):
             simplify_url = href
-        elif href and not href.startswith('#'):
+        elif href and not str(href).startswith('#'):
             direct_url = href
     
     return clean_url(direct_url), simplify_url
+
+def extract_locations(html):
+    """Extract locations from HTML, handling collapsible details and br-separated locations"""
+    
+    # First check for br-separated locations BEFORE BeautifulSoup processing
+    # since BeautifulSoup removes </br> tags and concatenates text
+    if '<br' in html or '</br>' in html:
+        # Split by both <br> and </br> tags and clean up
+        locations = []
+        for part in re.split(r'</?br\s*/?>', html):
+            # Remove HTML tags and clean whitespace
+            clean_part = re.sub(r'<[^>]+>', '', part).strip()
+            if clean_part and clean_part not in EXCLUDED_LOCATION_PATTERNS and not clean_part.startswith(tuple(EXCLUDED_LOCATION_PREFIXES)):
+                locations.append(clean_part)
+        
+        if locations:
+            # Return both display format and full locations array
+            if len(locations) == 1:
+                return locations[0], [locations[0]]
+            else:
+                display_location = f"{locations[0]} +{len(locations)-1} more"
+                return display_location, locations
+    
+    # If no br tags, process with BeautifulSoup for details elements
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # Check if this is a collapsible details element
+    details = soup.find('details')
+    if details:
+        # Extract all text content including br tags
+        content = str(details)
+        
+        # Split by both <br> and </br> tags and clean up
+        locations = []
+        for part in re.split(r'</?br\s*/?>', content):
+            # Remove HTML tags and clean whitespace
+            clean_part = re.sub(r'<[^>]+>', '', part).strip()
+            if clean_part and clean_part not in EXCLUDED_LOCATION_PATTERNS and not clean_part.startswith(tuple(EXCLUDED_LOCATION_PREFIXES)):
+                locations.append(clean_part)
+        
+        if locations:
+            # Return both display format and full locations array
+            if len(locations) == 1:
+                return locations[0], [locations[0]]
+            else:
+                display_location = f"{locations[0]} +{len(locations)-1} more"
+                return display_location, locations
+    
+    # Fallback to simple text extraction
+    fallback_text = soup.get_text(strip=True)
+    return fallback_text, [fallback_text]
 
 
 def parse_section(readme_path, section_marker, category):
@@ -108,14 +171,29 @@ def parse_section(readme_path, section_marker, category):
     last_company = ''
     last_is_faang = False
     
-    for row in rows:
+    for i, row in enumerate(rows):
         cells = row.find_all('td')
         if len(cells) < 5:
             continue
 
         company_html = str(cells[0])
         role = cells[1].get_text(strip=True)
-        location = cells[2].get_text(strip=True)
+        
+        # Extract location from raw table HTML before BeautifulSoup processes it
+        # Find the corresponding row in the raw HTML
+        raw_rows = re.findall(r'<tr[^>]*>.*?</tr>', table_html, re.DOTALL)
+        if i < len(raw_rows):
+            raw_row = raw_rows[i]
+            # Extract the third <td> from the raw row
+            raw_cells = re.findall(r'<td[^>]*>.*?</td>', raw_row, re.DOTALL)
+            if len(raw_cells) >= 3:
+                location_html = raw_cells[2]
+            else:
+                location_html = str(cells[2])
+        else:
+            location_html = str(cells[2])
+        
+        location_display, full_locations = extract_locations(location_html)
 
         # Handle both 5-column and 6-column table structures
         # README.md: Company | Role | Location | Application | Age (5 columns)
@@ -142,13 +220,16 @@ def parse_section(readme_path, section_marker, category):
         if not company or not role:
             continue
 
+
+
         base_url, app_url = extract_urls(application_html)
         
         internships.append({
             'source_file': readme_path.name,
             'company': company,
             'role': role,
-            'location': location,
+            'location': location_display,
+            'full_locations': json.dumps(full_locations),
             'terms': terms,
             'is_faang_plus': is_faang,
             'application_url': app_url or base_url,

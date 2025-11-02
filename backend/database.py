@@ -27,6 +27,7 @@ async def init_db():
             company TEXT NOT NULL,
             role TEXT NOT NULL,
             location TEXT NOT NULL,
+            full_locations TEXT,
             terms TEXT,
             is_faang_plus BOOLEAN DEFAULT FALSE,
             application_url TEXT NOT NULL UNIQUE,
@@ -48,6 +49,13 @@ async def init_db():
             FOREIGN KEY (resume_hash) REFERENCES resumes(hash)
         )
     """)
+    
+    # Add full_locations column if it doesn't exist (for existing databases)
+    try:
+        await db.execute("ALTER TABLE internships ADD COLUMN full_locations TEXT")
+    except aiosqlite.OperationalError:
+        # Column already exists
+        pass
 
     # Create resumes table
     await db.execute("""
@@ -149,14 +157,14 @@ async def upsert_internship(internship_data: dict):
         # Update existing internship, preserve application status
         await db.execute("""
             UPDATE internships SET
-                company = ?, role = ?, location = ?, terms = ?, is_faang_plus = ?,
+                company = ?, role = ?, location = ?, full_locations = ?, terms = ?, is_faang_plus = ?,
                 base_url = ?, age_raw = ?, date_posted = ?,
                 source_file = ?, category = ?, emojis = ?, has_phd_emoji = ?,
                 has_clearance_emoji = ?, last_seen = ?
             WHERE application_url = ?
         """, (
             internship_data['company'], internship_data['role'], internship_data['location'],
-            internship_data.get('terms', ''), internship_data['is_faang_plus'],
+            internship_data.get('full_locations'), internship_data.get('terms', ''), internship_data['is_faang_plus'],
             internship_data['base_url'], internship_data['age_raw'], internship_data['date_posted'],
             internship_data['source_file'], internship_data['category'],
             internship_data.get('emojis', ''), internship_data.get('has_phd_emoji', False),
@@ -166,14 +174,14 @@ async def upsert_internship(internship_data: dict):
         # Insert new internship
         await db.execute("""
             INSERT INTO internships (
-                id, company, role, location, terms, is_faang_plus,
+                id, company, role, location, full_locations, terms, is_faang_plus,
                 application_url, base_url, age_raw, date_posted, source_file,
                 category, emojis, has_phd_emoji, has_clearance_emoji,
                 is_active, last_seen, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             internship_id, internship_data['company'], internship_data['role'],
-            internship_data['location'], internship_data.get('terms', ''), 
+            internship_data['location'], internship_data.get('full_locations'), internship_data.get('terms', ''), 
             internship_data['is_faang_plus'], url,
             internship_data['base_url'], internship_data['age_raw'],
             internship_data['date_posted'], internship_data['source_file'],
