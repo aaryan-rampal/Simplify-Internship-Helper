@@ -10,6 +10,154 @@ let selectedCategories = new Set();
 let selectedLocations = new Set();
 let selectedCompanies = new Set();
 
+// Pagination state
+const PAGE_SIZE = 40;
+let currentPage = 0;
+let isLoadingMore = false;
+let hasMoreData = true;
+
+// Favicon cache
+const faviconCache = new Map();
+
+// Extract domain from URL
+function extractDomain(url) {
+    try {
+        const urlObj = new URL(url);
+        let domain = urlObj.hostname.replace('www.', '');
+        
+        // Handle special cases for subdomains that should use the main domain
+        const specialCases = {
+            'wd1.myworkdayjobs.com': 'workday.com',
+            'wd3.myworkdayjobs.com': 'workday.com', 
+            'wd5.myworkdayjobs.com': 'workday.com',
+            'wd12.myworkdayjobs.com': 'workday.com',
+            'wd503.myworkdayjobs.com': 'workday.com',
+            'wd108.myworkdayjobs.com': 'workday.com',
+            'myworkdaysite.com': 'workday.com'
+        };
+        
+        // Check for special cases first
+        if (specialCases[domain]) {
+            return specialCases[domain];
+        }
+        
+        // For common job platforms, use the service name
+        const jobPlatforms = {
+            'bamboohr.com': 'bamboohr.com',
+            'lever.co': 'lever.co',
+            'greenhouse.io': 'greenhouse.io',
+            'workday.com': 'workday.com',
+            'icims.com': 'icims.com',
+            'smartrecruiters.com': 'smartrecruiters.com',
+            'ashbyhq.com': 'ashbyhq.com',
+            'applytojob.com': 'applytojob.com',
+            'jibeapply.com': 'jibeapply.com',
+            'ultipro.com': 'ultipro.com'
+        };
+        
+        // Extract base domain for job platforms
+        const parts = domain.split('.');
+        if (parts.length >= 2) {
+            const baseDomain = parts.slice(-2).join('.');
+            if (jobPlatforms[baseDomain]) {
+                return jobPlatforms[baseDomain];
+            }
+            return baseDomain;
+        }
+        
+        return domain;
+    } catch (e) {
+        return 'unknown';
+    }
+}
+
+// Get favicon URL with caching and fallback
+function getFaviconUrl(domain) {
+    if (faviconCache.has(domain)) {
+        return faviconCache.get(domain);
+    }
+    
+    // Try multiple favicon sources with fallbacks
+    const faviconSources = [
+        `https://www.google.com/s2/favicons?domain=${domain}&sz=16`,
+        `https://favicon.yandex.net/favicon/${domain}`,
+        `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+        `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iNCIgZmlsbD0iI0QyRDJENyIvPgo8cGF0aCBkPSJNOCA0QzUuNzkwODYgNCA0IDUuNzkwODYgNCA4QzQgMTAuMjA5MSA1Ljc5MDg2IDEyIDggMTJDMTAuMjA5MSAxMiAxMiAxMC4yMDkxIDEyIDhDMTIgNS43OTA4NiAxMC4yMDkxIDQgOCA0WiIgZmlsbD0iIzZFNkU3MyIvPgo8L3N2Zz4K` // Default globe icon
+    ];
+    
+    // Cache the first source as primary, others will be tried via onerror
+    faviconCache.set(domain, faviconSources[0]);
+    return faviconSources[0];
+}
+
+
+
+// Handle scroll for infinite loading
+function handleScroll() {
+    if (isLoadingMore || !hasMoreData) return;
+    
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    
+    // Load more when user is within 500px of bottom
+    if (scrollTop + windowHeight >= documentHeight - 500) {
+        loadMoreInternships();
+    }
+}
+
+// Load more internships
+async function loadMoreInternships() {
+    if (isLoadingMore || !hasMoreData) return;
+    
+    isLoadingMore = true;
+    showLoadingIndicator();
+    
+    try {
+        currentPage++;
+        
+        // Simulate pagination by slicing the filtered data
+        const startIndex = currentPage * PAGE_SIZE;
+        const endIndex = startIndex + PAGE_SIZE;
+        const nextBatch = filteredInternships.slice(startIndex, endIndex);
+        
+        if (nextBatch.length === 0) {
+            hasMoreData = false;
+        } else {
+            renderInternshipRows(nextBatch, false); // Append mode
+        }
+        
+    } catch (error) {
+        console.error('Error loading more internships:', error);
+        showToast('Failed to load more internships', 'error');
+    } finally {
+        isLoadingMore = false;
+        hideLoadingIndicator();
+    }
+}
+
+// Show loading indicator
+function showLoadingIndicator() {
+    const tbody = document.getElementById('internshipsBody');
+    const loadingRow = document.createElement('tr');
+    loadingRow.id = 'loadingMoreRow';
+    loadingRow.innerHTML = `
+        <td colspan="11" class="loading">
+            <div class="loading-spinner"></div>
+            Loading more internships...
+        </td>
+    `;
+    tbody.appendChild(loadingRow);
+}
+
+// Hide loading indicator
+function hideLoadingIndicator() {
+    const loadingRow = document.getElementById('loadingMoreRow');
+    if (loadingRow) {
+        loadingRow.remove();
+    }
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
     await loadInternships();
@@ -36,6 +184,7 @@ function setupEventListeners() {
     document.querySelectorAll('input[name="faangFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
     document.querySelectorAll('input[name="phdFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
     document.querySelectorAll('input[name="clearanceFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
+    document.querySelectorAll('input[name="statusFilter"]').forEach(radio => radio.addEventListener('change', applyFilters));
     document.getElementById('showAppliedFilter').addEventListener('change', applyFilters);
 
     // Reset filters
@@ -71,6 +220,9 @@ function setupEventListeners() {
             e.stopPropagation();
         }
     });
+    
+    // Infinite scroll for pagination
+    window.addEventListener('scroll', handleScroll);
 }
 
 // Setup table event listeners (called after rendering)
@@ -78,7 +230,7 @@ function setupTableEventListeners() {
     // Apply checkbox
     document.querySelectorAll('.apply-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const internshipId = this.dataset.internshipId;
+            const internshipId = this.dataset.jobId;
             const internship = allInternships.find(i => i.id === internshipId);
             if (!internship || !internship.id) {
                 console.error('Invalid internship data:', {internshipId, internship});
@@ -92,7 +244,7 @@ function setupTableEventListeners() {
     // Resume select
     document.querySelectorAll('.resume-select').forEach(select => {
         select.addEventListener('change', function() {
-            const internshipId = this.dataset.internshipId;
+            const internshipId = this.dataset.jobId;
             const internship = allInternships.find(i => i.id === internshipId);
             if (!internship || !internship.id) {
                 console.error('Invalid internship data:', {internshipId, internship});
@@ -106,7 +258,7 @@ function setupTableEventListeners() {
     // Notes button
     document.querySelectorAll('.notes-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const internshipId = this.dataset.internshipId;
+            const internshipId = this.dataset.jobId;
             const internship = allInternships.find(i => i.id === internshipId);
             if (!internship || !internship.id) {
                 console.error('Invalid internship data:', {internshipId, internship});
@@ -119,15 +271,27 @@ function setupTableEventListeners() {
 }
 
 // Load internships from API
-async function loadInternships() {
+async function loadInternships(resetPagination = true) {
     try {
+        if (resetPagination) {
+            currentPage = 0;
+            hasMoreData = true;
+            isLoadingMore = false;
+        }
+
         const response = await fetch(`${API_BASE}/internships`);
         if (!response.ok) throw new Error('Failed to load internships');
 
         allInternships = await response.json();
         filteredInternships = [...allInternships];
-        populateFilterDropdowns();
-        renderInternships();
+        
+        if (resetPagination) {
+            populateFilterDropdowns();
+            renderInternships(true); // First load, replace all content
+        } else {
+            renderInternships(false); // Append new content
+        }
+        
         updateStats();
     } catch (error) {
         console.error('Error loading internships:', error);
@@ -154,6 +318,7 @@ function applyFilters() {
     const faangFilter = document.querySelector('input[name="faangFilter"]:checked').value;
     const phdFilter = document.querySelector('input[name="phdFilter"]:checked').value;
     const clearanceFilter = document.querySelector('input[name="clearanceFilter"]:checked').value;
+    const statusFilter = document.querySelector('input[name="statusFilter"]:checked').value;
     const appliedOnly = document.getElementById('showAppliedFilter').checked;
 
     filteredInternships = allInternships.filter(internship => {
@@ -168,12 +333,19 @@ function applyFilters() {
         if (phdFilter === 'exclude' && internship.has_phd_emoji) return false;
         if (clearanceFilter === 'only' && !internship.has_clearance_emoji) return false;
         if (clearanceFilter === 'exclude' && internship.has_clearance_emoji) return false;
+        if (statusFilter === 'active' && internship.is_active === false) return false;
+        if (statusFilter === 'inactive' && internship.is_active !== false) return false;
         if (appliedOnly && !internship.applied) return false;
         return true;
     });
 
+    // Reset pagination when filters change
+    currentPage = 0;
+    hasMoreData = true;
+    isLoadingMore = false;
+    
     populateFilterDropdowns();
-    renderInternships();
+    renderInternships(true); // Reset content
     updateStats();
 }
 
@@ -194,6 +366,7 @@ function resetFilters() {
     document.querySelector('input[name="faangFilter"][value="all"]').checked = true;
     document.querySelector('input[name="phdFilter"][value="all"]').checked = true;
     document.querySelector('input[name="clearanceFilter"][value="all"]').checked = true;
+    document.querySelector('input[name="statusFilter"][value="all"]').checked = true;
     document.getElementById('showAppliedFilter').checked = false;
 
     applyFilters();
@@ -348,7 +521,7 @@ function toggleDropdown(type) {
 }
 
 // Render internships table
-function renderInternships() {
+function renderInternships(resetContent = true) {
     const tbody = document.getElementById('internshipsBody');
 
     if (filteredInternships.length === 0) {
@@ -356,10 +529,29 @@ function renderInternships() {
         return;
     }
 
-    console.log('Rendering internships. Total filtered:', filteredInternships.length);
-    tbody.innerHTML = filteredInternships.map((internship, index) => {
+    // Get the batch to render
+    const startIndex = resetContent ? 0 : currentPage * PAGE_SIZE;
+    const endIndex = Math.min(startIndex + PAGE_SIZE, filteredInternships.length);
+    const batch = filteredInternships.slice(startIndex, endIndex);
+
+    console.log(`Rendering internships. Batch: ${startIndex}-${endIndex}, Total: ${filteredInternships.length}`);
+    
+    if (resetContent) {
+        tbody.innerHTML = '';
+    }
+    
+    renderInternshipRows(batch, resetContent);
+}
+
+// Render internship rows (separated for reuse)
+function renderInternshipRows(internships, resetContent = true) {
+    const tbody = document.getElementById('internshipsBody');
+    
+    const rowsHtml = internships.map((internship, index) => {
+        const rowClass = internship.applied ? 'applied' : '';
+        const inactiveClass = internship.is_active === false ? 'inactive' : '';
         return `
-<tr class="${internship.applied ? 'applied' : ''}" data-job-id="${internship.id}">
+<tr class="${rowClass} ${inactiveClass}" data-job-id="${internship.id}">
             <td>
                 <input type="checkbox"
                        class="apply-checkbox"
@@ -374,12 +566,24 @@ function renderInternships() {
             <td>${escapeHtml(internship.location)}</td>
              <td><span class="badge badge-category">${getCategoryName(internship.category)}</span></td>
              <td style="font-size: 18px; text-align: center;">${internship.emojis || ''}</td>
-             <td>${formatDate(internship.date_posted)}</td>
+             <td>${formatDate(internship.date_posted)} ${internship.is_active === false ? '<span class="badge badge-inactive">Inactive</span>' : ''}</td>
              <td><span class="badge">${getSeasonLabel(internship.source_file)}</span></td>
             <td>
                 <div class="link-group">
-                    ${internship.base_url ? '<a href="' + escapeHtml(internship.base_url) + '" target="_blank">🔗 Direct Link</a>' : ''}
-                    ${internship.application_url ? '<a href="' + escapeHtml(internship.application_url) + '" target="_blank">📝 Apply (Simplify)</a>' : ''}
+                    ${internship.base_url ? `
+                        <a href="${escapeHtml(internship.base_url)}" target="_blank" class="link-item">
+                            <img src="https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(internship.base_url)}&size=16" 
+                                 alt="" class="favicon" 
+                                 loading="lazy"
+                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iNCIgZmlsbD0iI0QyRDJENyIvPgo8cGF0aCBkPSJNOCA0QzUuNzkwODYgNCA0IDUuNzkwODYgNCA4QzQgMTAuMjA5MSA1Ljc5MDg2IDEyIDggMTJDMTAuMjA5MSAxMiAxMiAxMC4yMDkxIDEyIDhDMTIgNS43OTA4NiAxMC4yMDkxIDQgOCA0WiIgZmlsbD0iIzZFNkU3MyIvPgo8L3N2Zz4K'">
+                            <span class="domain-name">${extractDomain(internship.base_url)}</span>
+                        </a>
+                    ` : ''}
+                    ${internship.application_url ? `
+                        <a href="${escapeHtml(internship.application_url)}" target="_blank" class="link-item">
+                            📝 Apply (Simplify)
+                        </a>
+                    ` : ''}
                 </div>
             </td>
             <td>
@@ -394,11 +598,31 @@ function renderInternships() {
                 </button>
             </td>
         </tr>
-`
-}).join('')
+ `
+}).join('');
+
+    if (resetContent) {
+        tbody.innerHTML = rowsHtml;
+    } else {
+        tbody.insertAdjacentHTML('beforeend', rowsHtml);
+    }
 
     // Add event listeners using event delegation
     setupTableEventListeners();
+}
+
+// Load favicons for all direct links
+function loadFavicons() {
+    const directLinks = document.querySelectorAll('.link-item[data-domain]');
+    console.log('Found direct links:', directLinks.length);
+    
+    directLinks.forEach((link, index) => {
+        const domain = link.dataset.domain;
+        console.log(`Loading favicon for ${domain} (link ${index})`);
+        
+        const favicon = createFaviconElement(domain);
+        link.insertBefore(favicon, link.firstChild);
+    });
 }
 
 // Update stats

@@ -148,12 +148,30 @@
                  </div>
              </div>
 
-            <div class="filter-group">
-                <label>
-                    <input type="checkbox" id="showAppliedFilter">
-                    Show Applied Only
-                </label>
-            </div>
+             <div class="filter-group">
+                 <label>Status Filter:</label>
+                 <div class="radio-group">
+                     <label class="radio-btn">
+                         <input type="radio" name="statusFilter" value="all" checked>
+                         <span>All</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="statusFilter" value="active">
+                         <span>Active Only</span>
+                     </label>
+                     <label class="radio-btn">
+                         <input type="radio" name="statusFilter" value="inactive">
+                         <span>Inactive Only</span>
+                     </label>
+                 </div>
+             </div>
+
+             <div class="filter-group">
+                 <label>
+                     <input type="checkbox" id="showAppliedFilter">
+                     Show Applied Only
+                 </label>
+             </div>
 
             <button id="resetFilters" class="btn btn-secondary">Reset Filters</button>
         </div>
@@ -192,6 +210,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
