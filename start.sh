@@ -10,6 +10,23 @@
 
 set -e  # Exit on error
 
+# Function to cleanup background processes
+cleanup() {
+    echo ""
+    echo "Shutting down servers..."
+    if [ ! -z "$BACKEND_PID" ]; then
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
+    if [ ! -z "$FRONTEND_PID" ]; then
+        kill $FRONTEND_PID 2>/dev/null || true
+    fi
+    echo "Servers stopped"
+    exit 0
+}
+
+# Set up signal handlers for Ctrl+C
+trap cleanup SIGINT SIGTERM
+
 echo "Internship Tracker Setup & Startup"
 echo "======================================"
 
