@@ -29,20 +29,17 @@ pip install -q -r backend/requirements.txt
 
 # Check and initialize git submodule if needed
 echo "Checking git submodule status..."
-SUBMODULE_STATUS=$(git submodule status data/internships 2>/dev/null | cut -c1)
-
-if [ "$SUBMODULE_STATUS" = "-" ] || [ "$SUBMODULE_STATUS" = "+" ]; then
-    echo "Git submodule not initialized or out of date"
-    echo "Initializing git submodule..."
-    git submodule update --init --recursive --depth 1
-    echo "Submodule initialized"
-elif [ ! -d "data/internships" ] || [ -z "$(ls -A data/internships 2>/dev/null)" ]; then
+if [ ! -d "data/internships" ] || [ -z "$(ls -A data/internships 2>/dev/null)" ]; then
     echo "Submodule directory missing or empty"
-    echo "Initializing git submodule..."
-    git submodule update --init --recursive --depth 1
-    echo "Submodule initialized"
+    echo "Cloning git submodule..."
+    git clone --init submodule --depth 1
+    echo "Submodule cloned"
 else
-    echo "Submodule already initialized"
+    echo "Submodule already exists, pulling latest changes..."
+    cd data/internships
+    git pull origin dev
+    cd ../..
+    echo "Submodule updated"
 fi
 
 # Check if database exists, if not, run setup
@@ -83,8 +80,22 @@ fi
 echo ""
 echo "Starting backend server on http://localhost:8000"
 echo "======================================"
-echo "Press Ctrl+C to stop"
-echo ""
 
 cd backend
-python main.py
+python main.py &
+BACKEND_PID=$!
+
+# Start frontend server
+echo "Starting frontend server on http://localhost:5173"
+cd ../frontend
+python3 -m http.server 5173 &
+FRONTEND_PID=$!
+
+echo ""
+echo "DONE - Go to http://localhost:5173 in your browser"
+echo ""
+echo "Server logs:"
+echo "============"
+
+# Wait for both servers and show logs
+wait $BACKEND_PID $FRONTEND_PID
