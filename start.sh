@@ -70,7 +70,7 @@ if [ ! -f "data.db" ]; then
     
     # Run parser
     echo "Parsing internship data..."
-    python3 data/parser/parse_internships.py > /dev/null 2>&1
+    python3 data/parser/parse_internships.py > /dev/null
     if [ $? -eq 0 ]; then
         echo "CSV files generated"
     else
