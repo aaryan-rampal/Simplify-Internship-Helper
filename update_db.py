@@ -9,11 +9,13 @@ from pathlib import Path
 # Add backend to path
 sys.path.append('backend')
 
-from database import upsert_internship, mark_missing_internships_inactive
+from database import upsert_internship, mark_missing_internships_inactive, init_db
 from main import load_internships_from_csv
 
 async def update_database():
     """Update database with all parsed internship data"""
+    # Initialize database tables first
+    await init_db()
     categories = {
         "software_engineering": "software_engineering_internships.csv",
         "data_science": "data_science_ml_internships.csv", 

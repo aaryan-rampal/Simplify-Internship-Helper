@@ -3,3 +3,5 @@ uvicorn[standard]==0.31.0
 python-multipart==0.0.12
 pydantic==2.9.2
 aiosqlite==0.20.0
+beautifulsoup4==4.12.3
+pandas==2.2.0

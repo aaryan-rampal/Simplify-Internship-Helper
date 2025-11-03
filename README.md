@@ -42,63 +42,61 @@ job-helper/
 └── data.db                  # SQLite database (auto-created)
 ```
 
-## 🚀 Quick Start (5 minutes)
+## 🚀 Quick Start (2 minutes)
 
 ### Prerequisites
 
 - Python 3.11+
 - Git
 
-### 1️⃣ Clone & Initialize
+### 1️⃣ Clone Repository
 
 ```bash
+# Clone WITH submodules (recommended)
 git clone --recurse-submodules https://github.com/aaryan-rampal/Simplify-Internship-Helper
 cd job-helper
 
-# If already cloned without submodules:
-git submodule update --init --recursive
+# If you already cloned WITHOUT submodules, initialize them:
+git submodule update --init --recursive --depth 1
 ```
 
-### 2️⃣ Setup Environment
+**Note on Submodule Size**: The `--depth 1` flag does a shallow clone (3.1MB instead of ~1GB), which is much faster. If you need full history later, run: `git submodule update --init --recursive`
+
+### 2️⃣ Run Setup & Start Server
+
+That's it! The `./start.sh` script handles everything:
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate environment
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r backend/requirements.txt
-```
-
-### 3️⃣ Start Services
-
-```bash
-# Start backend (recommended)
 ./start.sh
-
-# OR start manually:
-source venv/bin/activate
-cd backend && python main.py
 ```
 
-### 4️⃣ Open Web App
+This will:
+- ✅ Create virtual environment (if needed)
+- ✅ Install all dependencies
+- ✅ Initialize git submodule (if needed)
+- ✅ Parse internship data (on first run)
+- ✅ Create SQLite database (on first run)
+- ✅ Start the backend server at `http://localhost:8000`
+
+### 3️⃣ Open Web App
+
+In another terminal:
 
 ```bash
-# Option A: Open directly
+# Option A: Simple file open
 open frontend/index.html
 
-# Option B: HTTP server
+# Option B: HTTP server (recommended)
 cd frontend && python -m http.server 8080
-# Then visit http://localhost:8080
 ```
 
-### 5️⃣ Verify Setup
+Then visit `http://localhost:8080` to see all internships!
 
-- Backend running at `http://localhost:8000`
-- Frontend loads internship data
-- "Refresh Data" button works
+### ✅ Verify Setup
+
+- Backend: `curl http://localhost:8000/api/stats`
+- Frontend: `http://localhost:8080`
+- Should see 300+ internship listings
 
 ---
 
@@ -181,47 +179,104 @@ This will read from `data/internships/` and write CSVs to `data/parsed/`.
 
 ## Working with Submodules
 
-This project uses git submodules to manage the internships data:
+This project uses git submodules to manage the internships data from SimplifyJobs.
+
+### First-Time Setup
+
+**If you cloned without submodules**, initialize them:
+
+```bash
+git submodule update --init --recursive --depth 1
+```
+
+The `--depth 1` flag creates a shallow clone (3.1MB) instead of full history (~1GB).
+
+**If you need the full git history later:**
+
+```bash
+git submodule update --init --recursive  # Remove --depth 1
+```
+
+### Checking Submodule Status
+
+```bash
+# See status of all submodules
+git submodule status
+
+# Output examples:
+# " abc123..." = properly initialized
+# "-abc123..." = not initialized (needs: git submodule update --init)
+# "+abc123..." = not at expected commit (needs: git submodule update)
+```
 
 ### Updating Internships Data
 
 **Via UI (Recommended):**
 
 - Click the "Refresh Data" button in the web interface
+- Automatically pulls latest changes and updates database
 
 **Manually:**
 
 ```bash
-# Pull latest from submodule
-cd data/internships
-git pull origin dev
-cd ../..
+# Update submodule to latest commit
+git submodule update --remote
 
 # Re-run parser to regenerate CSVs
 python3 data/parser/parse_internships.py
 
-# Optionally commit submodule pointer update
+# Populate database with new data
+python3 update_db.py
+
+# Optionally commit the submodule pointer update
 git add data/internships
 git commit -m "chore: Update internships data submodule"
 ```
 
+### Troubleshooting Submodules
+
+**Problem**: Empty directory or "fatal: not a git repository"
+
+```bash
+# Complete reset of submodule
+git submodule deinit -f data/internships
+git submodule update --init --recursive --depth 1
+```
+
+**Problem**: Submodule shows as "dirty" (+)
+
+```bash
+# Reset to clean state
+cd data/internships
+git reset --hard HEAD
+git clean -fd
+cd ../..
+```
+
 ### Important Notes
 
-- **Submodule is pristine**: Never add custom files to `data/internships/`
+- **Submodule is pristine**: Never add custom files to `data/internships/` (upstream-controlled)
 - **Parser lives outside**: Custom scripts are in `data/parser/`
-- **CSVs are generated**: Files in `data/parsed/` are git-ignored and auto-generated
-- The internships data is sourced from: https://github.com/SimplifyJobs/Summer2026-Internships
+- **CSVs are generated**: Files in `data/parsed/` are git-ignored and auto-regenerated
+- **Data source**: https://github.com/SimplifyJobs/Summer2026-Internships
 
 ## 🛠️ Command Reference
+
+### Quick Start
+
+```bash
+# One-command setup & startup (handles everything automatically)
+./start.sh
+```
 
 ### Essential Commands
 
 ```bash
+# Initialize submodules (if cloned without --recurse-submodules)
+git submodule update --init --recursive --depth 1
+
 # Check submodule status
 git submodule status
-
-# Initialize/update submodules
-git submodule update --init --recursive
 
 # Manual data refresh
 cd data/internships && git pull origin dev && cd ../..
@@ -238,7 +293,7 @@ lsof -i :8000
 ### Development Workflow
 
 ```bash
-# Start development server
+# Start everything (environment, database setup, server)
 ./start.sh
 
 # Test API endpoints
