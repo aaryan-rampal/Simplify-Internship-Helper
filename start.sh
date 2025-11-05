@@ -64,10 +64,10 @@ if [ ! -f "data.db" ]; then
     echo ""
     echo "Database not found - running first-time setup"
     echo "======================================"
-    
+
     # Create parsed directory if it doesn't exist
     mkdir -p data/parsed
-    
+
     # Run parser
     echo "Parsing internship data..."
     python3 data/parser/parse_internships.py > /dev/null
@@ -77,7 +77,7 @@ if [ ! -f "data.db" ]; then
         echo "Parser failed - check data/internships submodule"
         exit 1
     fi
-    
+
     # Populate database
     echo "Populating database..."
     python3 update_db.py
