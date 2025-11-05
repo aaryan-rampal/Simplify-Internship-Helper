@@ -59,33 +59,29 @@ else
     echo "Submodule updated"
 fi
 
-# Check if database exists, if not, run setup
-if [ ! -f "data.db" ]; then
-    echo ""
-    echo "Database not found - running first-time setup"
-    echo "======================================"
+# Always update data with latest changes
+echo ""
+echo "Updating internship data..."
+echo "======================================"
 
-    # Create parsed directory if it doesn't exist
-    mkdir -p data/parsed
+# Create parsed directory if it doesn't exist
+mkdir -p data/parsed
 
-    # Run parser
-    echo "Parsing internship data..."
-    python3 data/parser/parse_internships.py > /dev/null
-    if [ $? -eq 0 ]; then
-        echo "CSV files generated"
-    else
-        echo "Parser failed - check data/internships submodule"
-        exit 1
-    fi
-
-    # Populate database
-    echo "Populating database..."
-    python3 update_db.py
-    echo "Database populated"
-    echo ""
+# Run parser
+echo "Parsing internship data..."
+python3 data/parser/parse_internships.py > /dev/null
+if [ $? -eq 0 ]; then
+    echo "CSV files generated"
 else
-    echo "Database exists - skipping initial setup"
+    echo "Parser failed - check data/internships submodule"
+    exit 1
 fi
+
+# Populate database
+echo "Updating database..."
+python3 update_db.py
+echo "Database updated"
+echo ""
 
 # Check if resumes directory exists
 if [ ! -d "resumes" ]; then
