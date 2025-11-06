@@ -53,8 +53,23 @@ def test_location_bug():
                     raw_cells = re.findall(r'<td[^>]*>.*?</td>', raw_row, re.DOTALL)
                     if len(raw_cells) >= 3:
                         raw_location = re.sub(r'<[^>]+>', '', raw_cells[2]).strip()
-                        print(f"  RAW Location: {raw_location}")
-                        print(f"  BUG: {'✓ CORRECT' if raw_location == cells[2].get_text(strip=True) else '✗ WRONG'}")
+                        print(f"  OLD RAW Location: {raw_location}")
+                        print(f"  OLD BUG: {'✓ CORRECT' if raw_location == cells[2].get_text(strip=True) else '✗ WRONG'}")
+                
+                # Test new fixed extraction
+                filtered_raw_rows = []
+                for raw_row in raw_rows:
+                    raw_cells = re.findall(r'<td[^>]*>.*?</td>', raw_row, re.DOTALL)
+                    if len(raw_cells) >= 3:
+                        filtered_raw_rows.append(raw_row)
+                
+                if i < len(filtered_raw_rows):
+                    fixed_raw_row = filtered_raw_rows[i]
+                    fixed_raw_cells = re.findall(r'<td[^>]*>.*?</td>', fixed_raw_row, re.DOTALL)
+                    if len(fixed_raw_cells) >= 3:
+                        fixed_raw_location = re.sub(r'<[^>]+>', '', fixed_raw_cells[2]).strip()
+                        print(f"  NEW RAW Location: {fixed_raw_location}")
+                        print(f"  NEW BUG: {'✓ CORRECT' if fixed_raw_location == cells[2].get_text(strip=True) else '✗ WRONG'}")
                 print()
                 return True
     
