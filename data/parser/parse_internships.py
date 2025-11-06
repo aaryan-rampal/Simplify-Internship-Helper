@@ -182,8 +182,17 @@ def parse_section(readme_path, section_marker, category):
         # Extract location from raw table HTML before BeautifulSoup processes it
         # Find the corresponding row in the raw HTML
         raw_rows = re.findall(r'<tr[^>]*>.*?</tr>', table_html, re.DOTALL)
-        if i < len(raw_rows):
-            raw_row = raw_rows[i]
+        
+        # Filter out empty rows to match BeautifulSoup's behavior
+        # BeautifulSoup only counts rows with actual content, not empty <tr> tags
+        filtered_raw_rows = []
+        for raw_row in raw_rows:
+            raw_cells = re.findall(r'<td[^>]*>.*?</td>', raw_row, re.DOTALL)
+            if len(raw_cells) >= 3:  # Only keep rows with at least 3 cells (company, role, location)
+                filtered_raw_rows.append(raw_row)
+        
+        if i < len(filtered_raw_rows):
+            raw_row = filtered_raw_rows[i]
             # Extract the third <td> from the raw row
             raw_cells = re.findall(r'<td[^>]*>.*?</td>', raw_row, re.DOTALL)
             if len(raw_cells) >= 3:
