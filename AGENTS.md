@@ -12,6 +12,9 @@ python3 -m venv venv && source venv/bin/activate && pip install -r backend/requi
 curl http://localhost:8000/api/internships
 curl -X POST http://localhost:8000/api/refresh
 
+# Run single test
+python3 test_location_bug.py
+
 # Data refresh
 python3 update_db.py
 
