@@ -9,6 +9,7 @@ let currentInternshipIdForResume = null;
 let selectedCategories = new Set();
 let selectedLocations = new Set();
 let selectedCompanies = new Set();
+let selectedSeasons = new Set();
 
 // Pagination state
 const PAGE_SIZE = 40;
@@ -172,6 +173,7 @@ function setupEventListeners() {
     document.getElementById('categoryFilterHeader').addEventListener('click', () => toggleDropdown('category'));
     document.getElementById('locationFilterHeader').addEventListener('click', () => toggleDropdown('location'));
     document.getElementById('companyFilterHeader').addEventListener('click', () => toggleDropdown('company'));
+    document.getElementById('seasonFilterHeader').addEventListener('click', () => toggleDropdown('season'));
     
     // Initialize category checkboxes
     document.querySelectorAll('#categoryFilterDropdown input[type="checkbox"]').forEach(checkbox => {
@@ -331,6 +333,25 @@ function applyFilters() {
             if (!hasMatchingLocation) return false;
         }
         if (selectedCompanies.size > 0 && !selectedCompanies.has(internship.company)) return false;
+        if (selectedSeasons.size > 0) {
+            const internshipSeasons = [];
+            
+            // Add seasons from terms field
+            if (internship.terms && internship.terms.trim()) {
+                const seasonList = internship.terms.split(',').map(s => s.trim());
+                internshipSeasons.push(...seasonList);
+            }
+            
+            // Add Summer 2026 based on source_file
+            if (internship.source_file === 'README.md') {
+                internshipSeasons.push('Summer 2026');
+            }
+            
+            const hasMatchingSeason = internshipSeasons.some(season => 
+                selectedSeasons.has(season)
+            );
+            if (!hasMatchingSeason) return false;
+        }
         if (dateFrom && internship.date_posted < dateFrom) return false;
         if (dateTo && internship.date_posted > dateTo) return false;
         if (faangFilter === 'only' && !(internship.is_faang_plus === true || internship.is_faang_plus === 'True')) return false;
@@ -360,12 +381,14 @@ function resetFilters() {
     selectedCategories.clear();
     selectedLocations.clear();
     selectedCompanies.clear();
+    selectedSeasons.clear();
 
     document.querySelectorAll('#categoryFilterDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
 
     updateHeaderText('category');
     updateHeaderText('location');
     updateHeaderText('company');
+    updateHeaderText('season');
 
     document.getElementById('dateFromFilter').value = '';
     document.getElementById('dateToFilter').value = '';
@@ -382,8 +405,9 @@ function resetFilters() {
 function populateFilterDropdowns() {
     const locations = new Set();
     const companies = new Set();
+    const seasons = new Set();
     
-    filteredInternships.forEach(internship => {
+    allInternships.forEach(internship => {
         // Add individual locations from full_locations array
         if (internship.full_locations && internship.full_locations.length > 0) {
             internship.full_locations.forEach(location => {
@@ -394,6 +418,17 @@ function populateFilterDropdowns() {
             locations.add(internship.location);
         }
         companies.add(internship.company);
+        
+        // Add seasons from terms field (parse atomic seasons)
+        if (internship.terms && internship.terms.trim()) {
+            const seasonList = internship.terms.split(',').map(s => s.trim());
+            seasonList.forEach(season => seasons.add(season));
+        }
+        
+        // Add hardcoded Summer 2026 based on source_file
+        if (internship.source_file === 'README.md') {
+            seasons.add('Summer 2026');
+        }
     });
     
     const locationOptions = document.querySelector('#locationFilterDropdown .dropdown-options');
@@ -404,6 +439,11 @@ function populateFilterDropdowns() {
     const companyOptions = document.querySelector('#companyFilterDropdown .dropdown-options');
     companyOptions.innerHTML = Array.from(companies).sort().map(company => 
         `<label><input type="checkbox" value="${escapeHtml(company)}" ${selectedCompanies.has(company) ? 'checked' : ''}> ${escapeHtml(company)}</label>`
+    ).join('');
+    
+    const seasonOptions = document.querySelector('#seasonFilterDropdown .dropdown-options');
+    seasonOptions.innerHTML = Array.from(seasons).sort().map(season => 
+        `<label><input type="checkbox" value="${escapeHtml(season)}" ${selectedSeasons.has(season) ? 'checked' : ''}> ${escapeHtml(season)}</label>`
     ).join('');
     
     attachDropdownListeners();
@@ -417,6 +457,10 @@ function attachDropdownListeners() {
     
     document.querySelectorAll('#companyFilterDropdown .dropdown-options input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', handleCompanyChange);
+    });
+    
+    document.querySelectorAll('#seasonFilterDropdown .dropdown-options input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', handleSeasonChange);
     });
     
     const locationSearch = document.getElementById('locationSearch');
@@ -479,6 +523,17 @@ function handleCompanyChange(e) {
     applyFilters();
 }
 
+// Handle season selection
+function handleSeasonChange(e) {
+    if (e.target.checked) {
+        selectedSeasons.add(e.target.value);
+    } else {
+        selectedSeasons.delete(e.target.value);
+    }
+    updateHeaderText('season');
+    applyFilters();
+}
+
 // Update header text to show selected count
 function updateHeaderText(type) {
     let header, selectedSet, defaultText;
@@ -495,6 +550,10 @@ function updateHeaderText(type) {
         header = document.querySelector('#companyFilterHeader .multi-select-text');
         selectedSet = selectedCompanies;
         defaultText = 'All Companies';
+    } else if (type === 'season') {
+        header = document.querySelector('#seasonFilterHeader .multi-select-text');
+        selectedSet = selectedSeasons;
+        defaultText = 'All Seasons';
     }
     
     if (selectedSet.size === 0) {
