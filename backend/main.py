@@ -137,6 +137,7 @@ async def get_internships(
     date_to: Optional[str] = Query(None, description="Filter by end date (ISO format)"),
     location: Optional[str] = Query(None, description="Filter by location (partial match)"),
     company: Optional[str] = Query(None, description="Filter by company (partial match)"),
+    season: Optional[str] = Query(None, description="Filter by season (W26, S26, F25)"),
     is_faang_plus: Optional[bool] = Query(None, description="Filter FAANG+ companies"),
 ):
     """Get all internships with optional filters"""
@@ -173,6 +174,10 @@ async def get_internships(
         if company:
             company_lower = company.lower()
             internships = [i for i in internships if company_lower in i['company'].lower()]
+
+        if season:
+            season_lower = season.lower()
+            internships = [i for i in internships if season_lower in i.get('terms', '').lower()]
 
         if is_faang_plus is not None:
             internships = [i for i in internships if i['is_faang_plus'] == str(is_faang_plus)]
