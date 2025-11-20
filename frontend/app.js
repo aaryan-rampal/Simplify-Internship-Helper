@@ -729,9 +729,6 @@ function renderInternshipRows(internships, resetContent = true) {
             </td>
             <td>
                 <div class="notes-bubble">
-                    <button class="btn btn-secondary btn-sm notes-btn" data-job-id="${internship.id}">
-                        📝 Notes
-                    </button>
                     ${internship.notes ? `
                         <div class="notes-preview" onclick="openNotes('${internship.id}')">
                             ${escapeHtml(internship.notes.length > 50 ? internship.notes.substring(0, 50) + '...' : internship.notes)}
