@@ -6,6 +6,7 @@ let allInternships = [];
 let filteredInternships = [];
 let allResumes = [];
 let currentInternshipIdForResume = null;
+let currentInternshipIdForNotes = null;
 let selectedCategories = new Set();
 let selectedLocations = new Set();
 let selectedCompanies = new Set();
@@ -220,6 +221,20 @@ function setupEventListeners() {
     document.addEventListener('click', (e) => {
         if (e.target.closest('.multi-select-dropdown')) {
             e.stopPropagation();
+        }
+    });
+    
+    // Notes modal click outside to close
+    document.getElementById('notesModal').addEventListener('click', (e) => {
+        if (e.target.id === 'notesModal') {
+            closeNotesModal();
+        }
+    });
+
+    // Add escape key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('notesModal').classList.contains('active')) {
+            closeNotesModal();
         }
     });
     
@@ -713,9 +728,20 @@ function renderInternshipRows(internships, resetContent = true) {
                 </select>
             </td>
             <td>
-                <button class="btn btn-secondary btn-sm notes-btn" data-job-id="${internship.id}">
-                    📝 Notes
-                </button>
+                <div class="notes-bubble">
+                    <button class="btn btn-secondary btn-sm notes-btn" data-job-id="${internship.id}">
+                        📝 Notes
+                    </button>
+                    ${internship.notes ? `
+                        <div class="notes-preview" onclick="openNotes('${internship.id}')">
+                            ${escapeHtml(internship.notes.length > 50 ? internship.notes.substring(0, 50) + '...' : internship.notes)}
+                        </div>
+                    ` : `
+                        <div class="notes-preview empty" onclick="openNotes('${internship.id}')">
+                            + Add note
+                        </div>
+                    `}
+                </div>
             </td>
         </tr>
  `
@@ -945,9 +971,37 @@ function closeModal() {
 }
 
 function openNotes(internshipId) {
-    const notes = prompt('Add notes for this application:');
-    if (notes !== null) {
-        updateNotes(internshipId, notes);
+    const internship = allInternships.find(i => i.id === internshipId);
+    if (!internship || !internship.id) {
+        console.error('Invalid internship data:', {internshipId, internship});
+        showToast('Error: Invalid job data', 'error');
+        return;
+    }
+    
+    currentInternshipIdForNotes = internshipId;
+    const modal = document.getElementById('notesModal');
+    const textarea = document.getElementById('notesTextarea');
+    
+    // Load existing notes
+    textarea.value = internship.notes || '';
+    
+    // Show modal
+    modal.classList.add('active');
+    textarea.focus();
+}
+
+function closeNotesModal() {
+    const modal = document.getElementById('notesModal');
+    modal.classList.remove('active');
+    currentInternshipIdForNotes = null;
+}
+
+function saveNotes() {
+    const textarea = document.getElementById('notesTextarea');
+    const notes = textarea.value.trim();
+    
+    if (currentInternshipIdForNotes) {
+        updateNotes(currentInternshipIdForNotes, notes);
     }
 }
 
@@ -966,6 +1020,16 @@ async function updateNotes(internshipId, notes) {
 
         if (!response.ok) throw new Error('Failed to update notes');
 
+        // Update local state
+        const internship = allInternships.find(i => i.id === internshipId);
+        if (internship) {
+            internship.notes = notes;
+            internship.applied = true;
+        }
+
+        // Close modal and refresh table
+        closeNotesModal();
+        renderInternships(true); // Refresh to show updated preview
         showToast('Notes saved');
     } catch (error) {
         console.error('Error updating notes:', error);

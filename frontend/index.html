@@ -4,34 +4,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Internship Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#3B82F6',
+              secondary: '#64748B',
+              success: '#10B981',
+              warning: '#F59E0B',
+              danger: '#EF4444',
+              dark: '#1F2937',
+              light: '#F9FAFB'
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Summer 2026 Internship Tracker</h1>
-            <div class="header-actions">
-                <button id="refreshBtn" class="btn btn-primary">🔄 Refresh Data</button>
-                <div class="upload-section">
-                    <label for="resumeUpload" class="btn btn-secondary">📄 Upload Resume</label>
-                    <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx" style="display: none;">
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-lg bg-white/95">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+              <!-- Logo and Title -->
+              <div class="flex items-center space-x-4">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span class="text-white font-bold text-sm">IT</span>
                 </div>
+                <div>
+                  <h1 class="text-xl font-bold text-gray-900">Internship Tracker</h1>
+                  <p class="text-xs text-gray-500">Summer 2026 Opportunities</p>
+                </div>
+              </div>
+              
+              <!-- Actions -->
+              <div class="flex items-center space-x-3">
+                <button id="refreshBtn" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  Refresh Data
+                </button>
+                
+                <div class="relative">
+                  <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx" class="hidden">
+                  <label for="resumeUpload" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Upload Resume
+                  </label>
+                </div>
+              </div>
             </div>
+          </div>
         </header>
 
-        <div class="stats-bar">
-            <div class="stat">
-                <span class="stat-label">Total:</span>
-                <span id="totalCount" class="stat-value">0</span>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-600">Total Internships</p>
+                  <p id="totalCount" class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-600">Applied</p>
+                  <p id="appliedCount" class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span class="text-2xl">🔥</span>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-600">FAANG+</p>
+                  <p id="faangCount" class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+              </div>
             </div>
-            <div class="stat">
-                <span class="stat-label">Applied:</span>
-                <span id="appliedCount" class="stat-value">0</span>
-            </div>
-            <div class="stat">
-                <span class="stat-label">FAANG+:</span>
-                <span id="faangCount" class="stat-value">0</span>
-            </div>
+          </div>
         </div>
 
         <div class="filters">
@@ -220,6 +292,20 @@
                 <span class="close">&times;</span>
                 <h2>Select Resume</h2>
                 <div id="resumeList"></div>
+            </div>
+        </div>
+
+        <div id="notesModal" class="notes-modal">
+            <div class="notes-bubble-card">
+                <div class="notes-bubble-header">
+                    <h3 class="notes-bubble-title">Application Notes</h3>
+                    <button class="notes-close-btn" onclick="closeNotesModal()">&times;</button>
+                </div>
+                <textarea id="notesTextarea" class="notes-textarea" placeholder="Add your notes about this application..."></textarea>
+                <div class="notes-actions">
+                    <button class="notes-btn notes-btn-cancel" onclick="closeNotesModal()">Cancel</button>
+                    <button class="notes-btn notes-btn-save" onclick="saveNotes()">Save</button>
+                </div>
             </div>
         </div>
     </div>
