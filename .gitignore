@@ -10,3 +10,6 @@ data/parsed/*.csv
 
 # AI agent files
 .ai-agents/
+
+# Git worktrees
+.worktrees/
