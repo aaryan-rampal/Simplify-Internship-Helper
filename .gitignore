@@ -13,3 +13,9 @@ data/parsed/*.csv
 
 # Git worktrees
 .worktrees/
+
+.venv/
+.env
+
+docs/
+CLAUDE.md
