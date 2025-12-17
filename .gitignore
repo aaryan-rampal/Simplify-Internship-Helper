@@ -14,7 +14,7 @@ data/parsed/*.csv
 # Git worktrees
 .worktrees/
 
-.venv/
+.venv
 .env
 
 docs/
