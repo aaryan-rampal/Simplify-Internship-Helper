@@ -31,18 +31,18 @@ echo "Internship Tracker Setup & Startup"
 echo "======================================"
 
 # Check if venv exists
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv venv
+if [ ! -d ".venv" ]; then
+    echo ".venv doesn't exist"
+	exit 1
 fi
 
 # Activate virtual environment
 echo "Activating virtual environment..."
-source venv/bin/activate
+source .venv/bin/activate
 
 # Install dependencies
 echo "Installing dependencies..."
-pip install -q -r backend/requirements.txt
+uv pip install -q -r backend/requirements.txt
 
 # Check and initialize git submodule if needed
 echo "Checking git submodule status..."
