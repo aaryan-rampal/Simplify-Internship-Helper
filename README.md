@@ -1,5 +1,8 @@
 # Internship Tracker
 
+<img width="1622" height="975" alt="image" src="https://github.com/user-attachments/assets/f40b470f-df1f-4dfe-b2e8-e77c1fd34146" />
+
+
 > 🤖 **AI Agents**: Please read [AGENTS.md](./AGENTS.md) for detailed development instructions before making changes.
 
 A web application to track and manage Summer 2026 internship applications from the SimplifyJobs Summer2026-Internships repository.
