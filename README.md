@@ -29,7 +29,8 @@ job-helper/
 │   └── requirements.txt     # Python dependencies
 ├── frontend/
 │   ├── index.html           # Main HTML page
-│   ├── styles.css           # Styling
+│   ├── styles.css           # Styling (Tailwind CSS utilities)
+│   ├── tailwind-config.js   # Tailwind configuration
 │   └── app.js               # JavaScript logic
 ├── data/
 │   ├── internships/         # Git submodule (SimplifyJobs/Summer2026-Internships) - pristine
@@ -453,7 +454,7 @@ kill -9 $(lsof -t -i:8000)
 ## 🏗️ Technologies Used
 
 - **Backend**: FastAPI, SQLite, aiosqlite
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
+- **Frontend**: Vanilla JavaScript, HTML5, Tailwind CSS (CDN-based, no build step)
 - **Storage**: Content-based file deduplication with SHA-256
 - **Data Source**: Git submodule (SimplifyJobs/Summer2026-Internships)
 - **Environment**: Python 3.11 virtual environment

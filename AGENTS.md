@@ -34,10 +34,11 @@ python3 data/parser/parse_internships.py
 
 **Critical Pattern**: All database operations must use `async`/`await`. Data flows: Git submodule → CSV parser → Database → API endpoints.
 
-### Frontend: Vanilla JavaScript (No Build Step)
+### Frontend: Vanilla JavaScript with Tailwind CSS
 - **Entry Point**: `frontend/index.html` (served on port 5173)
 - **Logic**: `frontend/app.js` (all JavaScript functionality, event delegation for dynamic tables)
-- **Styling**: `frontend/styles.css` (CSS only, no preprocessor)
+- **Styling**: `frontend/styles.css` (CSS with Tailwind utilities), `frontend/tailwind-config.js` (Tailwind configuration)
+- **No Build Step**: Tailwind CSS is included via CDN, no build process required
 
 ### Data Pipeline: Git Submodule → Parser → SQLite
 1. **Source**: `data/internships/` (git submodule pointing to SimplifyJobs/Summer2026-Internships) - **READ-ONLY**
@@ -97,11 +98,12 @@ Uses content-based deduplication via SHA-256 hashing to prevent duplicate resume
 - Use `pathlib.Path` for file paths (preferred over string concatenation)
 
 ### JavaScript/Frontend
-- Plain HTML/CSS/JavaScript (no frameworks)
+- Plain HTML/CSS/JavaScript (no frameworks, Tailwind CSS for styling)
 - Event delegation for dynamic table rows
 - Real-time filtering without page reload
 - `formatDate()` converts ISO timestamps to relative time (Today/Yesterday/X days ago)
 - `stripEmojis()` removes emojis from role text for display
+- Tailwind CSS via CDN (no build step required) - configure in `frontend/tailwind-config.js`
 
 ## Git Submodule Management
 
