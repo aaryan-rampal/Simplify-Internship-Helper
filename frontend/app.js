@@ -792,7 +792,12 @@ async function toggleApplied(internshipId, applied) {
         const internship = allInternships.find(i => i.id === internshipId);
         if (internship) {
             internship.applied = applied;
-            applyFilters();
+
+            // Update only the checkbox in the DOM without rebuilding the entire table
+            const checkbox = document.querySelector(`.apply-checkbox[data-job-id="${internship.id}"]`);
+            if (checkbox) {
+                checkbox.checked = applied;
+            }
         }
 
         showToast(applied ? 'Marked as applied' : 'Unmarked application');
@@ -855,7 +860,24 @@ async function handleResumeUpload(event) {
         } else {
             showToast('Resume uploaded successfully');
             await loadResumes();
-            renderInternships();
+            // Rebuild resume dropdowns without rebuilding the entire table
+            document.querySelectorAll('.resume-select').forEach(select => {
+                const jobId = select.dataset.jobId;
+                const internship = allInternships.find(i => i.id === jobId);
+                if (internship) {
+                    // Preserve current selection
+                    const currentValue = select.value;
+                    select.innerHTML = `<option value="">No resume</option>
+                        ${allResumes.map(resume => '<option value="' + resume.hash + '" ' + (internship.resume_hash === resume.hash ? 'selected' : '') + '>' + escapeHtml(resume.original_filename) + '</option>').join('')}`;
+                    // Restore previous selection if it still exists
+                    const options = Array.from(select.options).map(o => o.value);
+                    if (!options.includes(currentValue)) {
+                        select.value = internship.resume_hash || '';
+                    } else {
+                        select.value = currentValue;
+                    }
+                }
+            });
         }
 
         // Reset file input
@@ -1022,11 +1044,28 @@ async function updateNotes(internshipId, notes) {
         if (internship) {
             internship.notes = notes;
             internship.applied = true;
+
+            // Update only the notes bubble in the DOM without rebuilding the entire table
+            const notesPreview = document.querySelector(`[data-job-id="${internship.id}"] .notes-preview`);
+            if (notesPreview) {
+                if (notes) {
+                    notesPreview.classList.remove('empty');
+                    notesPreview.textContent = notes.length > 50 ? notes.substring(0, 50) + '...' : notes;
+                } else {
+                    notesPreview.classList.add('empty');
+                    notesPreview.textContent = '+ Add note';
+                }
+            }
+
+            // Also update the applied checkbox if visible
+            const checkbox = document.querySelector(`.apply-checkbox[data-job-id="${internship.id}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
         }
 
-        // Close modal and refresh table
+        // Close modal
         closeNotesModal();
-        renderInternships(true); // Refresh to show updated preview
         showToast('Notes saved');
     } catch (error) {
         console.error('Error updating notes:', error);
